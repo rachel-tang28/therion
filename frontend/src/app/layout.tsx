@@ -28,7 +28,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} flex h-screen overflow-hidden`}>
         <Sidebar />
-        <main className="flex-1 overflow-auto bg-gray-100 p-6">
+        <main className="flex-1 overflow-auto main-box-1 pl-[41px] pt-[28px]">
           {children}
         </main>
       </body>

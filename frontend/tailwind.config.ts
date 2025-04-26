@@ -9,6 +9,10 @@ export default {
   ],
   theme: {
   	extend: {
+		fontFamily: {
+			roboto: ['Roboto', 'sans-serif'],
+			poppins: ['Poppins', 'sans-serif'],
+		},
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',

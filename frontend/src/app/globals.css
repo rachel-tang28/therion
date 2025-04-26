@@ -2,7 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
 
+@font-face {
+  font-family: 'Roboto';
+  src: url('/fonts/Roboto.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.font-poppins {
+  font-family: 'Poppins', sans-serif;
+}
+
+.font-roboto {
+  font-family: 'Roboto', sans-serif;
+}
 
 @layer base {
   :root {
@@ -141,4 +161,214 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #FFF;
+  box-shadow: 0px 10px 60px 0px rgba(226, 236, 249, 0.50);
+}
+
+.sidebar-heading {
+  color: #000;
+  font-family: Poppins;
+  font-size: 26px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  letter-spacing: 0.26px;
+}
+
+.sidebar-version {
+  color: #838383;
+  font-family: Poppins;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: -0.1px;
+}
+
+.sidebar-active-item-box {
+  border-radius: 8px;
+  background: #5932EA;
+}
+
+.sidebar-active-item-text {
+  color: #FFF;
+  font-family: Poppins;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: -0.14px;
+}
+
+.sidebar-active-item-heading {
+  color: #FFF;
+  font-family: Poppins;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: -0.14px;
+  transform-style: 3ms;
+}
+
+.sidebar-active-item-heading:hover {
+  opacity: 0.95;
+  
+}
+
+.sidebar-item-heading {
+  color: #9197B3;
+  font-family: Poppins;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: -0.14px;
+}
+
+.sidebar-item-heading:hover {
+  border-radius: 8px;
+  background: #dfeaff;
+}
+
+.main-heading-1 {
+  color: #000;
+  font-family: Poppins;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.main-box-1 {
+  background: #FAFBFF;
+}
+
+.input-heading {
+  color: var(--Black, #000);
+  font-family: Roboto;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+}
+
+.bolded-input-heading {
+  color: var(--Black, #000);
+
+  /* Input Field/Label */
+  font-family: Roboto;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+}
+
+.input-text {
+  color: var(--False-Black, #404040);
+  font-family: Roboto;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+
+.input-placeholder {
+  color: var(--Gray, #A6A6A6);
+  font-family: Roboto;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.input-box {
+  display: flex;
+  padding: 8px;
+  gap: 10px;
+  flex: 1 0 0;
+  align-self: stretch;
+  border-radius: 4px;
+  border: 1px solid var(--Gray, #A6A6A6);
+  background: var(--White, #FFF);
+}
+
+.input-box:focus {
+  border-radius: 4px;
+  border: 2px solid var(--Blue, #73A2FF);
+  background: var(--White, #FFF);
+}
+
+.input-placeholder {
+  color: var(--Gray, #A6A6A6);
+  font-family: Roboto;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.inner-box {
+  padding: 18px 18px 18px 18px;
+  background: #ffffff;
+  box-shadow: 0px 10px 60px rgba(226, 236, 249, 0.50);
+  border-radius: 18px;
+}
+
+.inner-box-heading {
+  color: #000;
+  font-family: Poppins;
+  font-size: 22px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  letter-spacing: -0.22px;
+}
+
+.upload-text {
+  color: #404040;
+  font-family: Roboto;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.upload-blue-text {
+  color: #3275EA;
+  text-align: center;
+  font-family: Roboto;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: auto;
+  text-decoration-thickness: auto;
+  text-underline-offset: auto;
+  text-underline-position: from-font;
+}
+
+.drag-and-drop-box {
+  display: flex;
+  padding: 8px 8px 8px 8px;
+  gap: 10px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid var(--Gray, #A6A6A6);
+  background: var(--White, #FFF);
 }
