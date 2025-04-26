@@ -4,6 +4,9 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
+# To run the server, use the command:
+# fastapi dev main.py
+
 
 @app.get("/")
 def read_root():
@@ -13,3 +16,5 @@ def read_root():
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: Union[str, None] = None):
     return {"item_id": item_id, "q": q}
+
+    
