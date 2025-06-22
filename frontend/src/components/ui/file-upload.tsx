@@ -43,7 +43,7 @@ export const FileUpload = ({ setFile }: FileUploadProps) => {
       <div className="w-full h-full flex flex-col items-center justify-center">
         {uploadedFileName ? (
           <h4 className="upload-text pt-[4px]">
-            Uploaded File: <span className="bolded-input-heading">{uploadedFileName}</span>
+            Uploaded File: <span className="upload-file-text">{uploadedFileName}</span>
           </h4>
         ) : (
           <h4 className="upload-text pt-[4px]">

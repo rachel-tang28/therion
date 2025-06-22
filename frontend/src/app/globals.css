@@ -361,6 +361,15 @@
   text-underline-position: from-font;
 }
 
+.upload-file-text {
+  color: #2c2c2c;
+  font-family: Roboto;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
 .drag-and-drop-box {
   display: flex;
   padding: 8px 8px 8px 8px;
