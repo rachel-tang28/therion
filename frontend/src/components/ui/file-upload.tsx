@@ -38,7 +38,7 @@ export const FileUpload = ({ setFile }: FileUploadProps) => {
   });
 
   return (
-    <div {...getRootProps()} className="drag-and-drop-box">
+    <div {...getRootProps()} className="drag-and-drop-box h-full">
       <input {...getInputProps()} />
       <div className="w-full h-full flex flex-col items-center justify-center">
         {uploadedFileName ? (

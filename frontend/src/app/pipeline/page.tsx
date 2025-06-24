@@ -64,15 +64,15 @@ export default function Pipeline() {
   return (
     <div className="min-h-screen max-h-screen min-w-screen max-w-screen flex flex-col main-box-1">
         <h1 className="main-heading-1">Hello 👋🏼</h1>
-        <main className="pr-[55px] mt-[18px] gap-[18px] w-full max-h-3/5 overflow-hidden flex flex-col w-full gap-[16px]">
-            <div className="flex flex-col gap-[4px] first-box">
+        <main className="pr-[55px] mt-[18px] gap-[18px] w-full max-h-3/5 overflow-scroll flex flex-col w-full gap-[16px]">
+            <div className="flex flex-col first-box">
                 <div className="flex flex-row w-full items-center gap-[8px]">
                     <Image src="/pipeline.svg" alt="Pipeline Icon" width={16} height={16}></Image>
                     <h1>Pipeline Configuration</h1>
                 </div>
                 
                 <div className="flex flex-row w-full items-center justify-between">
-                    <div className="flex flex-col gap-[4px] w-full">
+                    <div className="flex flex-col gap-[6px] w-full">
                         <h2 className="pl-[2px] input-box-header">Pipeline Name</h2>
                         <Input className="input-text w-1/2" placeholder="Enter pipeline name..."></Input>
                     </div>
@@ -84,12 +84,27 @@ export default function Pipeline() {
                     <Switch checked={advancedMode} onCheckedChange={setAdvancedMode}></Switch>
                     <Image src="/lightning.svg" alt="Lightning Icon" width={14} height={14}></Image>
                     <h3 className="input-box-header">Advanced Mode</h3>
-                    {advancedMode && <Badge variant="default">Enabled</Badge>}
+                    {advancedMode && <Badge variant="red">Enabled</Badge>}
                 </div>
             </div>
             <h1>Pipeline Workflow</h1>
-            <div className="flex flex-col gap-[4px] first-box">
-
+            <div className="flex flex-col gap-[0px] first-box">
+                <div className="flex flex-row w-full items-center gap-[12px]">
+                    <Badge variant="step_badge">Step 1</Badge>
+                    <h1>Upload Sequence</h1>
+                    <Badge variant="required_badge">Required</Badge>
+                </div>
+                <h1 className="description-text">Upload sequence file or paste sequence</h1>
+                <div className="flex flex-col gap-[4px] w-full h-[100px]">
+                    <FileUpload setFile={handleFileUpload} />
+                </div>
+                <div className="flex flex-col w-full justify-center items-center justify-between">
+                    <h2 className="description-text">or</h2>
+                </div>
+                <h1 className="input-box-header">Paste Sequence</h1>
+                <div className="flex flex-col gap-[4px] w-full">
+                    <Textarea className="input-text w-full min-h-[100px] items-start text-start align-top" placeholder="Paste your sequence here..."></Textarea>
+                </div>
             </div>
         </main>
         <footer className="footer_style flex mt-auto w-full">

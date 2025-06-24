@@ -311,12 +311,10 @@
 
 .input-box {
   display: flex;
-  padding: 8px;
+  padding: 12px;
   gap: 10px;
   flex: 1 0 0;
   align-self: stretch;
-  border-radius: 4px;
-  border: 1px solid var(--Gray, #A6A6A6);
   background: var(--White, #FFF);
 }
 
@@ -394,7 +392,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  border: 1px solid var(--Gray, #A6A6A6);
+  border: 1px dashed var(--Gray, #A6A6A6);
   background: var(--White, #FFF);
 }
 
@@ -508,4 +506,33 @@
   border-radius: 6.75px;
   background: #ffe4e4;
   color: #000000;
+}
+
+.step-badge {
+  display: flex;
+  padding: 2.75px 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6.75px;
+  background: #F3F3F5;
+  color: #4A5565;
+}
+
+.required-badge {
+  display: flex;
+  padding: 2.75px 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6.75px;
+  background: #D4183D;
+  color: #FFF;
+}
+
+.description-text {
+  color: #4A5565;
+  font-family: Roboto;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 10px;
 }
