@@ -16,13 +16,25 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: Inter;
+  src: url("/fonts/Inter.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
 .font-poppins {
-  font-family: 'Poppins', sans-serif;
+  font-family: Poppins, sans-serif;
 }
 
 .font-roboto {
-  font-family: 'Roboto', sans-serif;
+  font-family: Roboto, sans-serif;
 }
+
+.font-inter {
+  font-family: Inter, sans-serif;
+}
+
 
 @layer base {
   :root {
@@ -246,8 +258,12 @@
   line-height: normal;
 }
 
-.main-box-1 {
+.main-box-1-alt {
   background: #FAFBFF;
+}
+
+.main-box-1 {
+  background: #F9FAFB;
 }
 
 .input-heading {
@@ -443,3 +459,53 @@
     left: 100%;
   }
 } 
+
+.first-box {
+  display: flex;
+  padding: 24px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--item-spacing-20_25, 20.25px);
+  align-self: stretch;
+  border-radius: 12.75px;
+  border: var(--stroke-weight-1, 1px) solid var(--color-black-10, rgba(0, 0, 0, 0.10));
+  background: var(--color-white-solid, #FFF); 
+}
+
+.input-box-bg {
+  background: #F3F3F5;
+}
+
+.input-box-header {
+  color: #0A0A0A;
+  font-family: Roboto;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.line-seperator-box {
+  display: flex;
+  padding: var(--spacing-spacing-size-2, 8px) 0px;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+}
+
+.line-seperator {
+  width: 100%;
+  height: 2px;
+  align-self: stretch;;
+  background: #F3F3F5;
+}
+
+.advanced-mode-badge {
+  display: flex;
+  padding: 2.75px 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6.75px;
+  background: #ffe4e4;
+  color: #000000;
+}
