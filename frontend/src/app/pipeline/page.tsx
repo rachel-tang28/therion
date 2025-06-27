@@ -594,6 +594,12 @@ export default function Pipeline() {
                     </div>
                 </AccordionItem>
             </Accordion>
+            <div className="flex justify-center mt-[8px] mb-[36px]">
+                <Button className="run-button">
+                    <Image src="/play.svg" alt="Run Pipeline" width={16} height={16} priority />
+                    <h2 className="run-text">Run Analysis</h2>
+                </Button>                
+            </div>
             
         </main>
         <footer className="footer_style flex mt-auto w-full">

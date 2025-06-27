@@ -592,3 +592,73 @@
   font-weight: 200;
   line-height: 12px;
 }
+
+.run-button {
+  display: flex;
+  height: 35px;
+  width: 250px;
+  padding: 12px 14px;
+  justify-content: center;
+  align-items: center;
+  gap: var(--item-spacing-7, 7px);
+  border-radius: 6.75px;
+  opacity: var(--opacity-50, 0.5);
+  background: linear-gradient(90deg, var(--color-orange-50, #FF6900) 0%, var(--color-violet-52, #9810FA) 100%);
+}
+
+.run-text {
+  color: var(--www-figma-com-white, var(--color-white-solid, #FFF));
+  text-align: center;
+  font-size: 12.3px;
+  font-style: normal;
+  font-weight: var(--font-weight-500, 500);
+  line-height: var(--line-height-17_5, 17.5px); /* 142.276% */
+}
+
+.run-button::before {
+  content: "";
+  position: absolute;
+  width: 100px;
+  height: 100%;
+  background-image: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.8),
+    #ffffff00 70%
+  );
+  top: 0;
+  left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.run-button:hover::before {
+  animation: shine 1.5s ease-out infinite;
+  opacity: 0.6;
+}
+
+.run-button:hover {
+  transform: scale(1.02);
+  border-color: #fff9;
+  background: linear-gradient(90deg, var(--color-orange-50, #FF6900) 0%, var(--color-violet-52, #9810FA) 100%) !important;
+  color: #FFF !important;
+}
+
+.run-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6; 
+  background-color: #6c757d; 
+  border-color: #6c757d; 
+}
+
+@keyframes shine {
+  0% {
+    left: -100px;
+  }
+  60% {
+    left: 100%;
+  }
+  to {
+    left: 100%;
+  }
+} 
