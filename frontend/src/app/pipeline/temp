@@ -1,0 +1,29 @@
+<Accordion type="single" collapsible>
+  <AccordionItem value="item-1">
+    <AccordionTrigger><div className="flex flex-row w-full items-center gap-[12px]">
+                <Badge variant="step_badge">Step 1</Badge>
+                <h1>Upload Sequence</h1>
+                <Badge variant="required_badge">Required</Badge>
+            </div></AccordionTrigger>
+    <AccordionContent>
+        <div className="flex flex-col gap-[0px] first-box">
+            <div className="flex flex-row w-full items-center gap-[12px]">
+                <Badge variant="step_badge">Step 1</Badge>
+                <h1>Upload Sequence</h1>
+                <Badge variant="required_badge">Required</Badge>
+            </div>
+            <h1 className="description-text">Upload sequence file or paste sequence</h1>
+            <div className="flex flex-col gap-[4px] w-full h-[100px]">
+                <FileUpload setFile={handleFileUpload} />
+            </div>
+            <div className="flex flex-col w-full justify-center items-center justify-between">
+                <h2 className="description-text">or</h2>
+            </div>
+            <h1 className="input-box-header">Paste Sequence</h1>
+            <div className="flex flex-col gap-[4px] w-full">
+                <Textarea className="input-text w-full min-h-[100px] items-start text-start align-top" placeholder="Paste your sequence here..."></Textarea>
+            </div>
+        </div>
+    </AccordionContent>
+  </AccordionItem>
+</Accordion>

@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
+import { Toggle } from "@/components/ui/toggle"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+
 
 
 import { useRouter } from "next/navigation"
@@ -15,6 +23,7 @@ import { useRouter } from "next/navigation"
 export default function Pipeline() {
   const [ uploadedFiles, setUploadedFiles ] = useState<File[]>([]);
   const [advancedMode, setAdvancedMode] = useState(false);
+  const [s2Consensus, setS2Consensus] = useState(false);
   const router = useRouter();
 
   const handleFileUpload = (file: File | null) => {
@@ -65,7 +74,7 @@ export default function Pipeline() {
     <div className="min-h-screen max-h-screen min-w-screen max-w-screen flex flex-col main-box-1">
         <h1 className="main-heading-1">Hello 👋🏼</h1>
         <main className="pr-[55px] mt-[18px] gap-[18px] w-full max-h-3/5 overflow-scroll flex flex-col w-full gap-[16px]">
-            <div className="flex flex-col first-box">
+            <div className="flex flex-col normal-box">
                 <div className="flex flex-row w-full items-center gap-[8px]">
                     <Image src="/pipeline.svg" alt="Pipeline Icon" width={16} height={16}></Image>
                     <h1>Pipeline Configuration</h1>
@@ -88,24 +97,504 @@ export default function Pipeline() {
                 </div>
             </div>
             <h1>Pipeline Workflow</h1>
-            <div className="flex flex-col gap-[0px] first-box">
-                <div className="flex flex-row w-full items-center gap-[12px]">
-                    <Badge variant="step_badge">Step 1</Badge>
-                    <h1>Upload Sequence</h1>
-                    <Badge variant="required_badge">Required</Badge>
-                </div>
-                <h1 className="description-text">Upload sequence file or paste sequence</h1>
-                <div className="flex flex-col gap-[4px] w-full h-[100px]">
-                    <FileUpload setFile={handleFileUpload} />
-                </div>
-                <div className="flex flex-col w-full justify-center items-center justify-between">
-                    <h2 className="description-text">or</h2>
-                </div>
-                <h1 className="input-box-header">Paste Sequence</h1>
-                <div className="flex flex-col gap-[4px] w-full">
-                    <Textarea className="input-text w-full min-h-[100px] items-start text-start align-top" placeholder="Paste your sequence here..."></Textarea>
-                </div>
-            </div>
+            <Accordion type="single" collapsible>
+                <AccordionItem value="item-1">
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <div className="flex flex-col gap-[8px] w-full">
+                            <div className="flex flex-row items-center gap-[12px] w-full">
+                                <Badge variant="step_badge">Step 1</Badge>
+                                <h1>Upload Sequence</h1>
+                                <Badge variant="required_badge">Required</Badge>
+                            </div>
+
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
+                            <h1 className="description-text">Upload sequence file or paste sequence</h1>
+                            <div className="flex flex-col gap-[4px] w-full h-[100px]">
+                                <FileUpload setFile={handleFileUpload} />
+                            </div>
+                            <div className="flex flex-col w-full justify-center items-center justify-between">
+                                <h2 className="description-text">or</h2>
+                            </div>
+                            <h1 className="input-box-header">Paste Sequence</h1>
+                            <div className="flex flex-col gap-[4px] w-full">
+                                <Textarea className="input-text w-full min-h-[100px] items-start text-start align-top" placeholder="Paste your sequence here..."></Textarea>
+                            </div>
+                        </div>
+                    </AccordionContent>
+                    </div>
+                    
+                </AccordionItem>
+            </Accordion>
+            <Accordion type="single" collapsible>
+                <AccordionItem value="item-1">
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <div className="flex flex-row w-full items-center gap-[12px]">
+                            <Badge variant="step_badge">Step 2</Badge>
+                            <h1>T-Cell Epitope Prediction</h1>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
+                            <h1 className="description-text">Predict T-Cell epitopes from the uploaded sequence</h1>
+                            <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
+                                <div className="flex flex-col gap-[8px] w-full">
+                                    <h1 className="parameter-heading">Consensus Mode</h1>
+                                    <h2 className="parameter-description">Use all available methods for consensus prediction</h2>
+                                </div>
+                                <Switch checked={s2Consensus} onCheckedChange={setS2Consensus}></Switch>
+                            </div>
+
+                            <h1 className={`parameter-heading transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden`}>Select Methods</h1>
+                            <div className={`
+                                    grid grid-cols-2 gap-[6px] w-full
+                                    transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden
+                                `}>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
+                                    NetMHCpan
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/mhcflurry.svg" alt="MHCflurry Icon" width={16} height={16}></Image> */}
+                                    IEDB
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    DeepMHC
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    MHCflurry
+                                </Toggle>
+                            </div>
+                            {advancedMode && (
+                            <div className="flex w-full flex-col gap-[6px]">
+                                <div className="line-seperator-box">
+                                <div className="line-seperator"></div>
+                                </div>
+                                <div className="flex flex-row items-center gap-[12px]">
+                                <h1 className="input-box-header">Advanced Parameters</h1>
+                                <Badge variant="red">Advanced</Badge>
+                                </div>
+                                <div>
+                                <h2 className="parameter-heading">HLA Alleles</h2>
+                                </div>
+                            </div>
+                            )}
+                        </div>
+                        
+                    </AccordionContent>
+                    </div>
+                    
+                </AccordionItem>
+            </Accordion>
+            <Accordion type="single" collapsible>
+                <AccordionItem value="item-1">
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <div className="flex flex-row w-full items-center gap-[12px]">
+                            <Badge variant="step_badge">Step 3</Badge>
+                            <h1>Epitope Conservancy Analysis</h1>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
+                            <h1 className="description-text">Analyse epitope conservation across variants</h1>
+                            <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
+                                <div className="flex flex-col gap-[8px] w-full">
+                                    <h1 className="parameter-heading">Consensus Mode</h1>
+                                    <h2 className="parameter-description">Use all available methods for consensus prediction</h2>
+                                </div>
+                                <Switch checked={s2Consensus} onCheckedChange={setS2Consensus}></Switch>
+                            </div>
+
+                            <h1 className={`parameter-heading transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden`}>Select Methods</h1>
+                            <div className={`
+                                    grid grid-cols-2 gap-[6px] w-full
+                                    transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden
+                                `}>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
+                                    NetMHCpan
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/mhcflurry.svg" alt="MHCflurry Icon" width={16} height={16}></Image> */}
+                                    IEDB
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    DeepMHC
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    MHCflurry
+                                </Toggle>
+                            </div>
+                            {advancedMode && (
+                            <div className="flex w-full flex-col gap-[6px]">
+                                <div className="line-seperator-box">
+                                <div className="line-seperator"></div>
+                                </div>
+                                <div className="flex flex-row items-center gap-[12px]">
+                                <h1 className="input-box-header">Advanced Parameters</h1>
+                                <Badge variant="red">Advanced</Badge>
+                                </div>
+                                <div>
+                                <h2 className="parameter-heading">HLA Alleles</h2>
+                                </div>
+                            </div>
+                            )}
+                        </div>
+                        
+                    </AccordionContent>
+                    </div>
+                    
+                </AccordionItem>
+            </Accordion>
+            <Accordion type="single" collapsible>
+                <AccordionItem value="item-1">
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <div className="flex flex-row w-full items-center gap-[12px]">
+                            <Badge variant="step_badge">Step 4</Badge>
+                            <h1>Antigenicity Screening</h1>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
+                            <h1 className="description-text">Screen for antigenic potential</h1>
+                            <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
+                                <div className="flex flex-col gap-[8px] w-full">
+                                    <h1 className="parameter-heading">Consensus Mode</h1>
+                                    <h2 className="parameter-description">Use all available methods for consensus prediction</h2>
+                                </div>
+                                <Switch checked={s2Consensus} onCheckedChange={setS2Consensus}></Switch>
+                            </div>
+
+                            <h1 className={`parameter-heading transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden`}>Select Methods</h1>
+                            <div className={`
+                                    grid grid-cols-2 gap-[6px] w-full
+                                    transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden
+                                `}>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
+                                    NetMHCpan
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/mhcflurry.svg" alt="MHCflurry Icon" width={16} height={16}></Image> */}
+                                    IEDB
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    DeepMHC
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    MHCflurry
+                                </Toggle>
+                            </div>
+                            {advancedMode && (
+                            <div className="flex w-full flex-col gap-[6px]">
+                                <div className="line-seperator-box">
+                                <div className="line-seperator"></div>
+                                </div>
+                                <div className="flex flex-row items-center gap-[12px]">
+                                <h1 className="input-box-header">Advanced Parameters</h1>
+                                <Badge variant="red">Advanced</Badge>
+                                </div>
+                                <div>
+                                <h2 className="parameter-heading">HLA Alleles</h2>
+                                </div>
+                            </div>
+                            )}
+                        </div>
+                        
+                    </AccordionContent>
+                    </div>
+                    
+                </AccordionItem>
+            </Accordion>
+            <Accordion type="single" collapsible>
+                <AccordionItem value="item-1">
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <div className="flex flex-row w-full items-center gap-[12px]">
+                            <Badge variant="step_badge">Step 5</Badge>
+                            <h1>Allergenicity Screening</h1>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
+                            <h1 className="description-text">Check for allergen potential</h1>
+                            <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
+                                <div className="flex flex-col gap-[8px] w-full">
+                                    <h1 className="parameter-heading">Consensus Mode</h1>
+                                    <h2 className="parameter-description">Use all available methods for consensus prediction</h2>
+                                </div>
+                                <Switch checked={s2Consensus} onCheckedChange={setS2Consensus}></Switch>
+                            </div>
+
+                            <h1 className={`parameter-heading transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden`}>Select Methods</h1>
+                            <div className={`
+                                    grid grid-cols-2 gap-[6px] w-full
+                                    transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden
+                                `}>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
+                                    NetMHCpan
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/mhcflurry.svg" alt="MHCflurry Icon" width={16} height={16}></Image> */}
+                                    IEDB
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    DeepMHC
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    MHCflurry
+                                </Toggle>
+                            </div>
+                            {advancedMode && (
+                            <div className="flex w-full flex-col gap-[6px]">
+                                <div className="line-seperator-box">
+                                <div className="line-seperator"></div>
+                                </div>
+                                <div className="flex flex-row items-center gap-[12px]">
+                                <h1 className="input-box-header">Advanced Parameters</h1>
+                                <Badge variant="red">Advanced</Badge>
+                                </div>
+                                <div>
+                                <h2 className="parameter-heading">HLA Alleles</h2>
+                                </div>
+                            </div>
+                            )}
+                        </div>
+                        
+                    </AccordionContent>
+                    </div>
+                </AccordionItem>
+            </Accordion>
+            <Accordion type="single" collapsible>
+                <AccordionItem value="item-1">
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <div className="flex flex-row w-full items-center gap-[12px]">
+                            <Badge variant="step_badge">Step 6</Badge>
+                            <h1>Toxicity Screening</h1>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
+                            <h1 className="description-text">Assess toxicity potential</h1>
+                            <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
+                                <div className="flex flex-col gap-[8px] w-full">
+                                    <h1 className="parameter-heading">Consensus Mode</h1>
+                                    <h2 className="parameter-description">Use all available methods for consensus prediction</h2>
+                                </div>
+                                <Switch checked={s2Consensus} onCheckedChange={setS2Consensus}></Switch>
+                            </div>
+
+                            <h1 className={`parameter-heading transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden`}>Select Methods</h1>
+                            <div className={`
+                                    grid grid-cols-2 gap-[6px] w-full
+                                    transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden
+                                `}>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
+                                    NetMHCpan
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/mhcflurry.svg" alt="MHCflurry Icon" width={16} height={16}></Image> */}
+                                    IEDB
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    DeepMHC
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    MHCflurry
+                                </Toggle>
+                            </div>
+                            {advancedMode && (
+                            <div className="flex w-full flex-col gap-[6px]">
+                                <div className="line-seperator-box">
+                                <div className="line-seperator"></div>
+                                </div>
+                                <div className="flex flex-row items-center gap-[12px]">
+                                <h1 className="input-box-header">Advanced Parameters</h1>
+                                <Badge variant="red">Advanced</Badge>
+                                </div>
+                                <div>
+                                <h2 className="parameter-heading">HLA Alleles</h2>
+                                </div>
+                            </div>
+                            )}
+                        </div>
+                        
+                    </AccordionContent>
+                    </div>
+                </AccordionItem>
+            </Accordion>
+            <Accordion type="single" collapsible>
+                <AccordionItem value="item-1">
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <div className="flex flex-row w-full items-center gap-[12px]">
+                            <Badge variant="step_badge">Step 7</Badge>
+                            <h1>Cytokine Analysis</h1>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
+                            <h1 className="description-text">Predict cytokine induction profile</h1>
+                            <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
+                                <div className="flex flex-col gap-[8px] w-full">
+                                    <h1 className="parameter-heading">Consensus Mode</h1>
+                                    <h2 className="parameter-description">Use all available methods for consensus prediction</h2>
+                                </div>
+                                <Switch checked={s2Consensus} onCheckedChange={setS2Consensus}></Switch>
+                            </div>
+
+                            <h1 className={`parameter-heading transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden`}>Select Methods</h1>
+                            <div className={`
+                                    grid grid-cols-2 gap-[6px] w-full
+                                    transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden
+                                `}>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
+                                    NetMHCpan
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/mhcflurry.svg" alt="MHCflurry Icon" width={16} height={16}></Image> */}
+                                    IEDB
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    DeepMHC
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    MHCflurry
+                                </Toggle>
+                            </div>
+                            {advancedMode && (
+                            <div className="flex w-full flex-col gap-[6px]">
+                                <div className="line-seperator-box">
+                                <div className="line-seperator"></div>
+                                </div>
+                                <div className="flex flex-row items-center gap-[12px]">
+                                <h1 className="input-box-header">Advanced Parameters</h1>
+                                <Badge variant="red">Advanced</Badge>
+                                </div>
+                                <div>
+                                <h2 className="parameter-heading">HLA Alleles</h2>
+                                </div>
+                            </div>
+                            )}
+                        </div>
+                        
+                    </AccordionContent>
+                    </div>
+                </AccordionItem>
+            </Accordion>
+            <Accordion type="single" collapsible>
+                <AccordionItem value="item-1">
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <div className="flex flex-row w-full items-center gap-[12px]">
+                            <Badge variant="step_badge">Step 8</Badge>
+                            <h1>Population Coverage Analysis</h1>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
+                            <h1 className="description-text">Calculate population coverage</h1>
+                            <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
+                                <div className="flex flex-col gap-[8px] w-full">
+                                    <h1 className="parameter-heading">Consensus Mode</h1>
+                                    <h2 className="parameter-description">Use all available methods for consensus prediction</h2>
+                                </div>
+                                <Switch checked={s2Consensus} onCheckedChange={setS2Consensus}></Switch>
+                            </div>
+
+                            <h1 className={`parameter-heading transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden`}>Select Methods</h1>
+                            <div className={`
+                                    grid grid-cols-2 gap-[6px] w-full
+                                    transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden
+                                `}>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
+                                    NetMHCpan
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/mhcflurry.svg" alt="MHCflurry Icon" width={16} height={16}></Image> */}
+                                    IEDB
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    DeepMHC
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    MHCflurry
+                                </Toggle>
+                            </div>
+                            {advancedMode && (
+                            <div className="flex w-full flex-col gap-[6px]">
+                                <div className="line-seperator-box">
+                                <div className="line-seperator"></div>
+                                </div>
+                                <div className="flex flex-row items-center gap-[12px]">
+                                <h1 className="input-box-header">Advanced Parameters</h1>
+                                <Badge variant="red">Advanced</Badge>
+                                </div>
+                                <div>
+                                <h2 className="parameter-heading">HLA Alleles</h2>
+                                </div>
+                            </div>
+                            )}
+                        </div>
+                        
+                    </AccordionContent>
+                    </div>
+                </AccordionItem>
+            </Accordion>
+            
         </main>
         <footer className="footer_style flex mt-auto w-full">
             
