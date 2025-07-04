@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation"
 
 export default function Pipeline() {
   const [ uploadedFiles, setUploadedFiles ] = useState<File[]>([]);
+  const [sequence, setSequence] = useState<string>('');
   const [advancedMode, setAdvancedMode] = useState(false);
   const [s2Consensus, setS2Consensus] = useState(false);
   const router = useRouter();
@@ -34,40 +35,167 @@ export default function Pipeline() {
   };
 
   const handleSubmit = async (event: any) => {
-      event.preventDefault();
+    // event.preventDefault();
 
-      const formData = new FormData();
-      uploadedFiles.forEach(file => {
-          formData.append('file_uploads', file);
-      });
+    // const formData = new FormData();
+    // uploadedFiles.forEach(file => {
+    //     formData.append('file_uploads', file);
+    // });
 
-      try {
-          const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'uploadfile/';
-          console.log("Endpoint: ", endpoint);
-          const response = await fetch(endpoint, {
-              method: "POST",
-              headers: {
-                  'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-              },
-              body: formData
-          });
+    // try {
+    //     const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'uploadfile/';
+    //     console.log("Endpoint: ", endpoint);
+    //     const response = await fetch(endpoint, {
+    //         method: "POST",
+    //         headers: {
+    //             'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+    //         },
+    //         body: formData
+    //     });
 
-          if (response.ok) {
-              // Clear files and redirect on success
-              setUploadedFiles([]);
+    //     if (response.ok) {
+    //         // Clear files and redirect on success
+    //         setUploadedFiles([]);
 
-              router.push('../projects');
-          } else {
-              console.error("Failed to upload files.");
-              const errorData = await response.json();
-              console.error("Failed to upload files:", errorData.detail);
-              alert("Error: " + errorData.detail);
+    //     //   router.push('../projects');
+    //     } else {
+    //         console.error("Failed to upload files.");
+    //         const errorData = await response.json();
+    //         console.error("Failed to upload files:", errorData.detail);
+    //         alert("Error: " + errorData.detail);
 
-              router.push('/upload_files/');
-          }
-      } catch (error) {
-          console.error(error);
+    //     //   router.push('/upload_files/');
+    //     }
+    // } catch (error) {
+    //     console.error(error);
+    // }
+
+    // console.log("Sequence:", sequence);
+
+    // try {
+    //     console.log("Starting epitope prediction...");
+    //     const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'epitope_prediction/';
+    //     console.log("Endpoint: ", endpoint);
+    //     const response = await fetch(endpoint, {
+    //         method: "POST",
+    //         headers: {
+    //             'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+    //             'Content-Type': 'application/json',
+    //         },
+    //         body: JSON.stringify({
+    //             sequence: sequence, // Replace with actual sequence
+    //             alleles: "HLA-A*02:01,HLA-B*07:02", // Replace with actual alleles
+    //             methods: ["netmhcpan_el"] // Replace with actual methods
+    //         })
+    //     });
+
+    //     if (response.ok) {
+    //         const data = await response.json();
+    //         console.log("Epitope prediction result:", data);
+    //     } else {
+    //         console.error("Failed to predict epitopes.");
+    //         const errorData = await response.json();
+    //         console.error("Failed to predict epitopes:", errorData.detail);
+    //     }
+    // } catch (error) {
+    //     console.error("Error during epitope prediction:", error);
+    // }
+    
+    // try {
+    //     const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'conservancy_analysis/';
+    //     console.log("Endpoint: ", endpoint);
+    //     const response = await fetch(endpoint, {
+    //         method: "POST",
+    //         headers: {
+    //             'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+    //             'Content-Type': 'application/json',
+    //         },
+    //         body: JSON.stringify({
+    //             // Peptides need to be the output from first request
+    //             // For now, we will use the sequence as a placeholder
+    //             peptides: ["YLQPRTFLL", "FIAGLIAIV", "VLNDILSRL", "VLYENQKLI", "RLQSLQTYV", "KIADYNYKL", "RLDKVEAEV", "WTFGAGAAL", "IIRGWIFGT", "FVSNGTHWF"],
+    //             protein_sequence: sequence // Replace with actual protein sequence
+    //         })
+    //     });
+
+    //     if (!response.ok) {
+    //     throw new Error(`Error: ${response.status}`);
+    //     }
+
+    //     const result = await response.json();
+    //     console.log("Conservancy results:", result);
+    // } catch (err) {
+    //     console.error("API call failed:", err);
+    // }
+
+    // Assuming the peptides are the output from the previous step
+    const peptides = ["YLQPRTFLL", "FIAGLIAIV", "VLNDILSRL", "VLYENQKLI", "RLQSLQTYV", "KIADYNYKL", "RLDKVEAEV", "WTFGAGAAL", "IIRGWIFGT", "FVSNGTHWF"];
+    // Antigenicity Screening
+    // try {
+    //   const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'antigenicity_screening/';
+    //     console.log("Endpoint: ", endpoint);
+    //     const response = await fetch(endpoint, {
+    //         method: "POST",
+    //         headers: {
+    //         "Content-Type": "application/json"
+    //         },
+    //         body: JSON.stringify({ peptides })
+    //     });
+
+    //   if (!response.ok) {
+    //     throw new Error("API request failed");
+    //   }
+
+    //   const data = await response.json();
+    //   console.log("Vaxijen results:", data);
+    // } catch (err) {
+    //   console.error(err);
+    // }
+
+    // Allergenicity Screening
+    try {
+      const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'allergenicity_screening/';
+        console.log("Endpoint: ", endpoint);
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ peptides })
+        });
+
+      if (!response.ok) {
+        throw new Error("API request failed");
       }
+
+      const data = await response.json();
+      console.log("AlgPred2 results:", data);
+    } catch (err) {
+      console.error(err);
+    }
+
+    // Toxicity Screening
+    try {
+      const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'toxicity_screening/';
+        console.log("Endpoint: ", endpoint);
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ peptides })
+        });
+
+      if (!response.ok) {
+        throw new Error("API request failed");
+      }
+
+      const data = await response.json();
+      console.log("ToxinPred results:", data);
+    } catch (err) {
+      console.error(err);
+    }
+
   };
 
   return (
@@ -121,7 +249,7 @@ export default function Pipeline() {
                             </div>
                             <h1 className="input-box-header">Paste Sequence</h1>
                             <div className="flex flex-col gap-[4px] w-full">
-                                <Textarea className="input-text w-full min-h-[100px] items-start text-start align-top" placeholder="Paste your sequence here..."></Textarea>
+                                <Textarea className="input-text w-full min-h-[100px] items-start text-start align-top" placeholder="Paste your sequence here..." onChange={e => setSequence(e.target.value)}></Textarea>
                             </div>
                         </div>
                     </AccordionContent>
@@ -595,7 +723,7 @@ export default function Pipeline() {
                 </AccordionItem>
             </Accordion>
             <div className="flex justify-center mt-[8px] mb-[36px]">
-                <Button className="run-button">
+                <Button className="run-button" onClick={handleSubmit}>
                     <Image src="/play.svg" alt="Run Pipeline" width={16} height={16} priority />
                     <h2 className="run-text">Run Analysis</h2>
                 </Button>                

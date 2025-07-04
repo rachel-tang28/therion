@@ -93,7 +93,7 @@ if peptide_idx is None or score_idx is None:
 top_peptides = sorted(data, key=lambda row: float(row[score_idx]), reverse=True)[:10]
 
 # Build dictionary list
-peptide_data = [
+peptides_netmhcpan = [
     {
         "sequence": row[peptide_idx],
         "combined_score": float(row[score_idx])
@@ -103,7 +103,7 @@ peptide_data = [
 
 # Output
 print("Top 10 peptides with scores:")
-print(peptide_data)
+print(peptides_netmhcpan)
 
 
 
@@ -175,7 +175,7 @@ while True:
     print("Waiting for results...")
     time.sleep(2)
 
-# print("Final result:", json.dumps(result, indent=2))
+print("Final result:", json.dumps(result, indent=2))
 
 #### READING RESULTS ####
 peptide_table = None
@@ -199,7 +199,7 @@ if peptide_idx is None or score_idx is None:
 
 top_peptides = sorted(data, key=lambda row: float(row[score_idx]), reverse=True)[:10]
 
-peptide_data = [
+peptides_netctl = [
     {
         "sequence": row[peptide_idx],
         "netctl_score": float(row[score_idx])
@@ -208,4 +208,31 @@ peptide_data = [
 ]
 
 print("Top 10 peptides with scores:")
-print(peptide_data)
+print(peptides_netctl)
+
+
+combined_dict = {}
+
+for rank, entry in enumerate(peptides_netmhcpan):
+    seq = entry["sequence"]
+    score = entry["combined_score"]
+    weight = len(peptides_netmhcpan) - rank
+    combined_dict.setdefault(seq, 0)
+    combined_dict[seq] += score * weight
+
+for rank, entry in enumerate(peptides_netctl):
+    seq = entry["sequence"]
+    score = entry["netctl_score"]
+    weight = len(peptides_netctl) - rank
+    combined_dict.setdefault(seq, 0)
+    combined_dict[seq] += score * weight
+
+consensus_list = [
+    {"sequence": seq, "weighted_score": combined_score}
+    for seq, combined_score in combined_dict.items()
+]
+consensus_list.sort(key=lambda x: x["weighted_score"], reverse=True)
+
+print("Consensus top peptides:")
+for peptide in consensus_list[:10]:
+    print(peptide)

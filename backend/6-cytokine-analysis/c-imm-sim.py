@@ -1,0 +1,83 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
+import urllib.request
+
+# 1️⃣ Setup Selenium browser (Chrome)
+driver = webdriver.Chrome()  # Make sure chromedriver is installed & in PATH
+
+# 2️⃣ Open C-ImmSim server
+driver.get("https://kraken.iac.rm.cnr.it/C-IMMSIM/index.php")
+
+# 3️⃣ Fill in email and password
+email_box = WebDriverWait(driver, 10).until(
+    EC.presence_of_element_located((By.NAME, "email"))
+)
+email_box.send_keys("rachell.tang28@gmail.com")
+
+password_box = driver.find_element(By.NAME, "p")
+password_box.send_keys("123")
+
+# 4️⃣ Submit login form
+login_button = driver.find_element(By.XPATH, '//input[@type="submit" and @value="Login"]')
+login_button.click()
+
+# 5️⃣ Wait for the simulation page to load
+# (This depends on what you want to do — for now we assume a simulation is already submitted)
+print("Logged in!")
+
+# 4️⃣ Wait for job input page
+WebDriverWait(driver, 10).until(
+    EC.presence_of_element_located((By.NAME, "inj1_IdProtLong1"))
+)
+
+# 5️⃣ Fill in Antigen sequence
+sequence = """>4D2I_1
+MIIGYVIGQATTQEALILAERPVRLGTYVVLEYDNVKALGLITNVTRGSPLLDDNMNDIEIVQRLKQFNNSIPVYTKAKVKLLCDMNNHFLMPDIPPFAGTPAREAEDEELKSIYSQDGQIRIGSLIGKNVEVKLNINSFARHLAILAATGSGKSNTVAVLSQRISELGGSVLIFDYHGEYYDSDIKNLNRIEPKLNPLYMTPREFSTLLEIRENAIIQYRILRRAFIKVTNGIRAALAAGQIPFSTLNSQFYELMADALETQGNSDKKSSAKDEVLNKFEEFMDRYSNVIDLTSSDIIEKVKRGKVNVVSLTQLDEDSMDAVVSHYLRRILDSRKDFKRSKNSGLKFPIIAVIEEAHVFLSKNENTLTKYWASRIAREGRKFGVGLTIVSQRPKGLDENILSQMTNKIILKIIEPTDKKYILESSDNLSEDLAEQLSSLDVGEAIIIGKIVKLPAVVKIDMFEGKLLGSDPDMIGEWKKVAASEKIAKGFADFGTEIGD
+""" 
+
+protein_box = driver.find_element(By.NAME, "inj1_IdProtLong1")
+protein_box.clear()
+protein_box.send_keys(sequence)
+
+print("✅ Input sequence added!")
+
+# 6️⃣ Submit the job
+submit_button = driver.find_element(By.XPATH, '//input[@type="submit" and @value="SUBMIT JOB"]')
+submit_button.click()
+
+print("✅ Job submitted! Waiting for it to finish...")
+
+# 7️⃣ Wait for TERMINATED PROCESSES table
+terminated_table = WebDriverWait(driver, 180).until(
+    EC.presence_of_element_located((By.XPATH, "//table[contains(., 'normal termination')]"))
+)
+print("✅ Job terminated, output ready.")
+
+# 8️⃣ Get OUTPUT link
+output_link = driver.find_element(By.XPATH, "//table//tr[3]//td[5]/a")
+output_href = output_link.get_attribute("href")
+print("🔗 Output page link:", output_href)
+
+# 9️⃣ Visit output page
+driver.get(output_href)
+
+# 1️⃣0️⃣ Find result image & download
+result_img = WebDriverWait(driver, 20).until(
+    EC.presence_of_element_located((By.XPATH, "//img"))
+)
+img_url = result_img.get_attribute("src")
+print("🖼️ Image URL:", img_url)
+
+driver.get(img_url)
+
+# Right-click save approach: take a screenshot of the image element
+result_img = driver.find_element(By.XPATH, "//img")
+result_img.screenshot("cimmsim_result.png")
+
+print("✅ Image saved using Selenium screenshot")
+
+# 🔚 Done!
+driver.quit()
