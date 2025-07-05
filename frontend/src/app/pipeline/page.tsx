@@ -14,7 +14,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-
+import RoundIcon from "@/components/ui/round_icon"
 
 
 import { useRouter } from "next/navigation"
@@ -25,176 +25,103 @@ export default function Pipeline() {
   const [sequence, setSequence] = useState<string>('');
   const [advancedMode, setAdvancedMode] = useState(false);
   const [s2Consensus, setS2Consensus] = useState(false);
+  const [error, setError] = useState(false);
   const router = useRouter();
+  const [fileUpload, setFileUpload] = useState(false);
 
   const handleFileUpload = (file: File | null) => {
     if (file) {
       setUploadedFiles((prev: File[]) => [...prev, file]);
       console.log("File uploaded:", file);
     }
+
+    setError(false); // Reset error state when a file is uploaded
+    setFileUpload(true);
   };
 
   const handleSubmit = async (event: any) => {
-    // event.preventDefault();
+    event.preventDefault();
 
-    // const formData = new FormData();
-    // uploadedFiles.forEach(file => {
-    //     formData.append('file_uploads', file);
-    // });
+    if (uploadedFiles.length === 0 && sequence.trim() === '') {
+        setError(true);
+        alert("Please upload a file or paste a sequence.");
+        return;
+    }
 
-    // try {
-    //     const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'uploadfile/';
-    //     console.log("Endpoint: ", endpoint);
-    //     const response = await fetch(endpoint, {
-    //         method: "POST",
-    //         headers: {
-    //             'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-    //         },
-    //         body: formData
-    //     });
+    if (uploadedFiles.length !== 0) {
+        const formData = new FormData();
+        uploadedFiles.forEach(file => {
+            formData.append('file_uploads', file);
+        });
 
-    //     if (response.ok) {
-    //         // Clear files and redirect on success
-    //         setUploadedFiles([]);
+        try {
+            const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'upload_file/';
+            console.log("Endpoint: ", endpoint);
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+                },
+                body: formData
+            });
 
-    //     //   router.push('../projects');
-    //     } else {
-    //         console.error("Failed to upload files.");
-    //         const errorData = await response.json();
-    //         console.error("Failed to upload files:", errorData.detail);
-    //         alert("Error: " + errorData.detail);
+            if (response.ok) {
+                // Clear files and redirect on success
+                setUploadedFiles([]); 
+                router.push('../results');
 
-    //     //   router.push('/upload_files/');
-    //     }
-    // } catch (error) {
-    //     console.error(error);
-    // }
+            //   router.push('../projects');
+            } else {
+                console.error("Failed to upload files.");
+                const errorData = await response.json();
+                console.error("Failed to upload files:", errorData.detail);
+                alert("Error: " + errorData.detail);
 
-    // console.log("Sequence:", sequence);
+            //   router.push('/upload_files/');
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    } else {
+        // Check seqeunce is valid fasta format
+        const fastaRegex = /^>.*\n([ACDEFGHIKLMNPQRSTVWY\n]+)$/i;
+        if (!fastaRegex.test(sequence)) {
+            setError(true);
+            alert("Invalid sequence format. Please ensure it is in FASTA format.");
+            return;
+        }
+        setError(false);
+        // If sequence is valid, send to backend
+        try {
+            const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'upload_sequence/';
+            console.log("Endpoint: ", endpoint);
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ sequence })
+            });
 
-    // try {
-    //     console.log("Starting epitope prediction...");
-    //     const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'epitope_prediction/';
-    //     console.log("Endpoint: ", endpoint);
-    //     const response = await fetch(endpoint, {
-    //         method: "POST",
-    //         headers: {
-    //             'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-    //             'Content-Type': 'application/json',
-    //         },
-    //         body: JSON.stringify({
-    //             sequence: sequence, // Replace with actual sequence
-    //             alleles: "HLA-A*02:01,HLA-B*07:02", // Replace with actual alleles
-    //             methods: ["netmhcpan_el"] // Replace with actual methods
-    //         })
-    //     });
+            if (response.ok) {
+                // Clear sequence and redirect on success
+                setSequence('');
+                router.push('../results');
+            } else {
+                console.error("Failed to upload sequence.");
+                const errorData = await response.json();
+                console.error("Failed to upload sequence:", errorData.detail);
+                alert("Error: " + errorData.detail);
 
-    //     if (response.ok) {
-    //         const data = await response.json();
-    //         console.log("Epitope prediction result:", data);
-    //     } else {
-    //         console.error("Failed to predict epitopes.");
-    //         const errorData = await response.json();
-    //         console.error("Failed to predict epitopes:", errorData.detail);
-    //     }
-    // } catch (error) {
-    //     console.error("Error during epitope prediction:", error);
-    // }
+            //   router.push('/upload_sequence/');
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
     
-    // try {
-    //     const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'conservancy_analysis/';
-    //     console.log("Endpoint: ", endpoint);
-    //     const response = await fetch(endpoint, {
-    //         method: "POST",
-    //         headers: {
-    //             'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-    //             'Content-Type': 'application/json',
-    //         },
-    //         body: JSON.stringify({
-    //             // Peptides need to be the output from first request
-    //             // For now, we will use the sequence as a placeholder
-    //             peptides: ["YLQPRTFLL", "FIAGLIAIV", "VLNDILSRL", "VLYENQKLI", "RLQSLQTYV", "KIADYNYKL", "RLDKVEAEV", "WTFGAGAAL", "IIRGWIFGT", "FVSNGTHWF"],
-    //             protein_sequence: sequence // Replace with actual protein sequence
-    //         })
-    //     });
-
-    //     if (!response.ok) {
-    //     throw new Error(`Error: ${response.status}`);
-    //     }
-
-    //     const result = await response.json();
-    //     console.log("Conservancy results:", result);
-    // } catch (err) {
-    //     console.error("API call failed:", err);
-    // }
-
-    // Assuming the peptides are the output from the previous step
-    const peptides = ["YLQPRTFLL", "FIAGLIAIV", "VLNDILSRL", "VLYENQKLI", "RLQSLQTYV", "KIADYNYKL", "RLDKVEAEV", "WTFGAGAAL", "IIRGWIFGT", "FVSNGTHWF"];
-    // Antigenicity Screening
-    // try {
-    //   const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'antigenicity_screening/';
-    //     console.log("Endpoint: ", endpoint);
-    //     const response = await fetch(endpoint, {
-    //         method: "POST",
-    //         headers: {
-    //         "Content-Type": "application/json"
-    //         },
-    //         body: JSON.stringify({ peptides })
-    //     });
-
-    //   if (!response.ok) {
-    //     throw new Error("API request failed");
-    //   }
-
-    //   const data = await response.json();
-    //   console.log("Vaxijen results:", data);
-    // } catch (err) {
-    //   console.error(err);
-    // }
-
-    // Allergenicity Screening
-    try {
-      const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'allergenicity_screening/';
-        console.log("Endpoint: ", endpoint);
-        const response = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-            "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ peptides })
-        });
-
-      if (!response.ok) {
-        throw new Error("API request failed");
-      }
-
-      const data = await response.json();
-      console.log("AlgPred2 results:", data);
-    } catch (err) {
-      console.error(err);
-    }
-
-    // Toxicity Screening
-    try {
-      const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'toxicity_screening/';
-        console.log("Endpoint: ", endpoint);
-        const response = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-            "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ peptides })
-        });
-
-      if (!response.ok) {
-        throw new Error("API request failed");
-      }
-
-      const data = await response.json();
-      console.log("ToxinPred results:", data);
-    } catch (err) {
-      console.error(err);
-    }
+    console.log("Sequence:", sequence);
 
   };
 
@@ -229,18 +156,22 @@ export default function Pipeline() {
                 <AccordionItem value="item-1">
                     <div className="accordion-wrapper">
                     <AccordionTrigger className="first-box-accordion">
+                        <RoundIcon imageSrc="/file_emoji.svg"></RoundIcon>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 1</Badge>
-                                <h1>Upload Sequence</h1>
+                                <h1 className={error ? "text-red-600" : ""}>Upload Sequence</h1>
                                 <Badge variant="required_badge">Required</Badge>
+                                {error && (
+                                    <Image src="/exclamation_emoji.svg" alt="Error Icon" width={16} height={16} className="flashing-error" />
+                                )}
                             </div>
-
+                            <h1 className={error ? "description-text-error" : "description-text"}>Upload sequence file or paste sequence</h1>
+                            
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
                         <div className="flex flex-col gap-[0px] first-box">
-                            <h1 className="description-text">Upload sequence file or paste sequence</h1>
                             <div className="flex flex-col gap-[4px] w-full h-[100px]">
                                 <FileUpload setFile={handleFileUpload} />
                             </div>
@@ -249,7 +180,15 @@ export default function Pipeline() {
                             </div>
                             <h1 className="input-box-header">Paste Sequence</h1>
                             <div className="flex flex-col gap-[4px] w-full">
-                                <Textarea className="input-text w-full min-h-[100px] items-start text-start align-top" placeholder="Paste your sequence here..." onChange={e => setSequence(e.target.value)}></Textarea>
+                                <Textarea
+                                    className="input-text w-full min-h-[100px] items-start text-start align-top"
+                                    placeholder="Paste your sequence here..."
+                                    disabled={fileUpload}
+                                    onChange={e => {
+                                        setSequence(e.target.value);
+                                        setError(false);
+                                    }}
+                                ></Textarea>
                             </div>
                         </div>
                     </AccordionContent>
@@ -261,14 +200,17 @@ export default function Pipeline() {
                 <AccordionItem value="item-1">
                     <div className="accordion-wrapper">
                     <AccordionTrigger className="first-box-accordion">
-                        <div className="flex flex-row w-full items-center gap-[12px]">
-                            <Badge variant="step_badge">Step 2</Badge>
-                            <h1>T-Cell Epitope Prediction</h1>
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                        <div className="flex flex-col gap-[0px] first-box">
+                        <RoundIcon imageSrc="/dna_emoji.svg"></RoundIcon>
+                        <div className="flex flex-col gap-[8px] w-full">
+                            <div className="flex flex-row items-center gap-[12px] w-full">
+                                <Badge variant="step_badge">Step 2</Badge>
+                                <h1>T-Cell Epitope Prediction</h1>
+                            </div>
                             <h1 className="description-text">Predict T-Cell epitopes from the uploaded sequence</h1>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
                             <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
                                 <div className="flex flex-col gap-[8px] w-full">
                                     <h1 className="parameter-heading">Consensus Mode</h1>
@@ -328,14 +270,17 @@ export default function Pipeline() {
                 <AccordionItem value="item-1">
                     <div className="accordion-wrapper">
                     <AccordionTrigger className="first-box-accordion">
-                        <div className="flex flex-row w-full items-center gap-[12px]">
-                            <Badge variant="step_badge">Step 3</Badge>
-                            <h1>Epitope Conservancy Analysis</h1>
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                        <div className="flex flex-col gap-[0px] first-box">
+                        <RoundIcon imageSrc="/tree_emoji.svg"></RoundIcon>
+                        <div className="flex flex-col gap-[8px] w-full">
+                            <div className="flex flex-row items-center gap-[12px] w-full">
+                                <Badge variant="step_badge">Step 3</Badge>
+                                <h1>Epitope Conservancy Analysis</h1>
+                            </div>
                             <h1 className="description-text">Analyse epitope conservation across variants</h1>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
                             <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
                                 <div className="flex flex-col gap-[8px] w-full">
                                     <h1 className="parameter-heading">Consensus Mode</h1>
@@ -395,14 +340,17 @@ export default function Pipeline() {
                 <AccordionItem value="item-1">
                     <div className="accordion-wrapper">
                     <AccordionTrigger className="first-box-accordion">
-                        <div className="flex flex-row w-full items-center gap-[12px]">
-                            <Badge variant="step_badge">Step 4</Badge>
-                            <h1>Antigenicity Screening</h1>
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                        <div className="flex flex-col gap-[0px] first-box">
+                        <RoundIcon imageSrc="/shield_emoji.svg"></RoundIcon>
+                        <div className="flex flex-col gap-[8px] w-full">
+                            <div className="flex flex-row items-center gap-[12px] w-full">
+                                <Badge variant="step_badge">Step 4</Badge>
+                                <h1>Antigenicity Screening</h1>
+                            </div>
                             <h1 className="description-text">Screen for antigenic potential</h1>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
                             <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
                                 <div className="flex flex-col gap-[8px] w-full">
                                     <h1 className="parameter-heading">Consensus Mode</h1>
@@ -462,14 +410,17 @@ export default function Pipeline() {
                 <AccordionItem value="item-1">
                     <div className="accordion-wrapper">
                     <AccordionTrigger className="first-box-accordion">
-                        <div className="flex flex-row w-full items-center gap-[12px]">
-                            <Badge variant="step_badge">Step 5</Badge>
-                            <h1>Allergenicity Screening</h1>
+                        <RoundIcon imageSrc="/pill_emoji.svg"></RoundIcon>
+                        <div className="flex flex-col gap-[8px] w-full">
+                            <div className="flex flex-row items-center gap-[12px] w-full">
+                                <Badge variant="step_badge">Step 5</Badge>
+                                <h1>Allergenicity Screening</h1>
+                            </div>
+                            <h1 className="description-text">Screen for allergenic potential</h1>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
                         <div className="flex flex-col gap-[0px] first-box">
-                            <h1 className="description-text">Check for allergen potential</h1>
                             <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
                                 <div className="flex flex-col gap-[8px] w-full">
                                     <h1 className="parameter-heading">Consensus Mode</h1>
@@ -528,14 +479,17 @@ export default function Pipeline() {
                 <AccordionItem value="item-1">
                     <div className="accordion-wrapper">
                     <AccordionTrigger className="first-box-accordion">
-                        <div className="flex flex-row w-full items-center gap-[12px]">
-                            <Badge variant="step_badge">Step 6</Badge>
-                            <h1>Toxicity Screening</h1>
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                        <div className="flex flex-col gap-[0px] first-box">
+                        <RoundIcon imageSrc="/biohazard_emoji.svg"></RoundIcon>
+                        <div className="flex flex-col gap-[8px] w-full">
+                            <div className="flex flex-row items-center gap-[12px] w-full">
+                                <Badge variant="step_badge">Step 6</Badge>
+                                <h1>Toxicity Screening</h1>
+                            </div>
                             <h1 className="description-text">Assess toxicity potential</h1>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
                             <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
                                 <div className="flex flex-col gap-[8px] w-full">
                                     <h1 className="parameter-heading">Consensus Mode</h1>
@@ -594,14 +548,17 @@ export default function Pipeline() {
                 <AccordionItem value="item-1">
                     <div className="accordion-wrapper">
                     <AccordionTrigger className="first-box-accordion">
-                        <div className="flex flex-row w-full items-center gap-[12px]">
-                            <Badge variant="step_badge">Step 7</Badge>
-                            <h1>Cytokine Analysis</h1>
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                        <div className="flex flex-col gap-[0px] first-box">
+                        <RoundIcon imageSrc="/barchart_emoji.svg"></RoundIcon>
+                        <div className="flex flex-col gap-[8px] w-full">
+                            <div className="flex flex-row items-center gap-[12px] w-full">
+                                <Badge variant="step_badge">Step 7</Badge>
+                                <h1>Cytokine Analysis</h1>
+                            </div>
                             <h1 className="description-text">Predict cytokine induction profile</h1>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
                             <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
                                 <div className="flex flex-col gap-[8px] w-full">
                                     <h1 className="parameter-heading">Consensus Mode</h1>
@@ -660,14 +617,17 @@ export default function Pipeline() {
                 <AccordionItem value="item-1">
                     <div className="accordion-wrapper">
                     <AccordionTrigger className="first-box-accordion">
-                        <div className="flex flex-row w-full items-center gap-[12px]">
-                            <Badge variant="step_badge">Step 8</Badge>
-                            <h1>Population Coverage Analysis</h1>
+                        <RoundIcon imageSrc="/globe_emoji.svg"></RoundIcon>
+                        <div className="flex flex-col gap-[8px] w-full">
+                            <div className="flex flex-row items-center gap-[12px] w-full">
+                                <Badge variant="step_badge">Step 8</Badge>
+                                <h1>Population Coverage Analysis</h1>
+                            </div>
+                            <h1 className="description-text">Calculate population coverage</h1>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
                         <div className="flex flex-col gap-[0px] first-box">
-                            <h1 className="description-text">Calculate population coverage</h1>
                             <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
                                 <div className="flex flex-col gap-[8px] w-full">
                                     <h1 className="parameter-heading">Consensus Mode</h1>

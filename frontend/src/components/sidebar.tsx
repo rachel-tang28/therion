@@ -10,6 +10,7 @@ import Image from "next/image";
 const menuItems = [
   { name: "Dashboard", activeSrc: "/white-key-square.svg", src: "/grey-key-square.svg", href: "/" },
   { name: "Pipeline", activeSrc: "/white-key-square.svg", src: "/grey-key-square.svg", href: "/pipeline" },
+  { name: "Results", activeSrc: "/white-check-circle.svg", src: "/grey-check-circle.svg", href: "/results" },
   { name: "Projects", activeSrc: "/white-cube.svg", src: "/grey-cube.svg", href: "/projects" },
   { name: "Settings", activeSrc: "/white-star.svg", src: "/grey-star.svg", href: "/settings" },
   { name: "Help", activeSrc: "/white-help.svg", src: "/grey-help.svg", href: "/help" },

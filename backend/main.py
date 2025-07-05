@@ -24,6 +24,10 @@ app.add_middleware(
 # To run the server, use the command:
 # fastapi dev main.py
 
+# Global variables
+# Global variable to store the uploaded sequence
+global_sequence: str = ""
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -36,7 +40,7 @@ def read_item(item_id: int, q: Union[str, None] = None):
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@app.post("/uploadfile/")
+@app.post("/upload_file/")
 async def create_upload_file(file_uploads: list[UploadFile], request: Request):
     """
     Handles file uploads.
@@ -46,6 +50,13 @@ async def create_upload_file(file_uploads: list[UploadFile], request: Request):
     filenames = []
     for file_upload in file_uploads:
         data = await file_upload.read()
+        print(f"Sequence from file {data}")
+        # Convert into FASTA format string
+        fasta_sequence = f"{data.decode('utf-8')}"
+        # Store the sequence in the global variable
+        global global_sequence
+        global_sequence = fasta_sequence
+        print(f"FASTA Sequence: {fasta_sequence}")
         save_to = os.path.join(UPLOAD_FOLDER, file_upload.filename)
         with open(save_to, 'wb') as f:
             f.write(data)
@@ -53,8 +64,21 @@ async def create_upload_file(file_uploads: list[UploadFile], request: Request):
 
     return {"filenames": filenames}
 
-class EpitopePredictionRequest(BaseModel):
+class SequenceUpload(BaseModel):
     sequence: str
+
+@app.post("/upload_sequence/")
+async def upload_sequence(request: SequenceUpload):
+    """
+    Handles sequence uploads.
+    Returns the uploaded sequence.
+    """
+    print("Received sequence:", request.sequence)
+    global global_sequence
+    global_sequence = request.sequence
+    return {"sequence": request.sequence}
+
+class EpitopePredictionRequest(BaseModel):
     alleles: str
     methods: List[str]
 
@@ -65,22 +89,32 @@ async def epitope_prediction(request: EpitopePredictionRequest):
     """
     # Here you would call your epitope prediction logic
     print("Received epitope prediction request:")
-    output = IEDB_epitope_prediction(request.sequence, request.alleles, request.methods)
+    output = IEDB_epitope_prediction(global_sequence, request.alleles, request.methods)
     print("Output from IEDB:", output)
     return output
 
 class ConservancyAnalysisRequest(BaseModel):
     peptides: List[str]
-    protein_sequence: str
 
 @app.post("/conservancy_analysis/")
 async def conservancy_analysis(request: ConservancyAnalysisRequest):
     """
     Function for conservancy analysis via. IEDB Script.
     """
-    result = IEDB_conservancy_analysis(request.peptides, request.protein_sequence)
+    result = IEDB_conservancy_analysis(request.peptides, global_sequence)
     print("Conservancy Analysis Result:", result)
-    return result
+    # Extract seuences and conservation scores
+    cleaned_results = []
+    for row in result["results"]:
+        sequence = row[2]
+        conservation_raw = row[5]  # e.g. "100.00%"
+        conservation_score = float(conservation_raw.strip('%'))
+        cleaned_results.append({
+            "sequence": sequence,
+            "conservation_score": conservation_score
+        })
+    print("Cleaned Conservancy Results:", cleaned_results)
+    return cleaned_results
 
 class AntigenicityRequest(BaseModel):
     peptides: List[str]
