@@ -52,22 +52,34 @@ def AlgPred2(peptide_list: list[str]):
         result_table = driver.find_element(By.XPATH, "//table").text
         print("\nAlgPred2 Batch Results:\n", result_table)
 
-        results = {}
+        results = []
 
         # Optionally print parsed rows and cells
         rows = driver.find_elements(By.XPATH, "//table//tr")
         for row in rows:
             cells = row.find_elements(By.TAG_NAME, "td")
-            # Only print from the first column, fifth column, and sixth column
             if len(cells) >= 6:
                 cell_texts = [cells[0].text, cells[4].text, cells[5].text]
                 print(cell_texts)
-                results[cell_texts[0]] = {
-                    "score": cell_texts[1],
-                    "prediction": cell_texts[2]
-                }
-        print("\nParsed Results:")
+                seq_num = int(cell_texts[0].replace("seq", "")) - 1
+                sequence = peptide_list[seq_num]
+                results.append({
+                    "sequence": sequence,
+                    "allergen": cell_texts[2] == "Allergen"
+                })
+        print("\nParsed Results: ", results)
         return {"results": results}
     
     finally:
         driver.quit()
+
+if __name__ == "__main__":
+    # Example test peptides
+    test_peptides = [
+        "MKTIIALSYIFCLVFADYKDDDDK",
+        "GILGFVFTL",
+        "LLFGYPVYV"
+    ]
+    print("Running AlgPred2 with test peptides:", test_peptides)
+    result = AlgPred2(test_peptides)
+    print("\nFinal returned result:\n", result)

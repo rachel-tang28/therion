@@ -149,13 +149,10 @@ async def allergenicity_screening(request: AntigenicityRequest):
     print("Received allergenicity screening request with peptides:", request.peptides)
     algpred2_results = AlgPred2(request.peptides)
 
-    # Combine results
-    combined_results = {
-        "algpred2": algpred2_results["results"]
-    }
+    # Extract the sequence name and prediction from AlgPred2 results
+    print("AlgPred2 Results:", algpred2_results)
 
-    print("Allergenicity Screening Results:", combined_results)
-    return combined_results
+    return algpred2_results
 
 @app.post("/toxicity_screening/")
 async def toxicity_screening(request: AntigenicityRequest):
@@ -165,5 +162,5 @@ async def toxicity_screening(request: AntigenicityRequest):
     # Placeholder for ToxinPred logic
     print("Received toxicity screening request with peptides:", request.peptides)
     toxinpred_results = ToxinPred(request.peptides)
-    print("ToxinPred Results:", toxinpred_results)
+    print("ToxinPred Results:", toxinpred_results["results"])
     return toxinpred_results

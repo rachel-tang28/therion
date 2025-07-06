@@ -59,6 +59,7 @@ def Vaxijen(df,target,threshold):
     pred_score=[]
     antigen=[]
     for k in seqs:
+        print(f"Processing sequence: {k}")
         temp=Vaxijen_fnc(k,target,threshold)
         pred_score.append(temp['prediction_score'])
         antigen.append(bool(temp['ANTIGEN']))

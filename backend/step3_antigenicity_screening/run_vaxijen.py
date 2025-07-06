@@ -3,7 +3,7 @@ from vaxijen_script import Vaxijen
 
 # Load your sequences file
 df = pd.read_csv('test.csv')
-
+print("Loaded sequences:")
 # Run the Vaxijen function
 result_df = Vaxijen(df, target='virus', threshold=0.4)
 

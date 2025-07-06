@@ -44,7 +44,7 @@ def ToxinPred(peptide_list: list[str]):
 
         result_table = driver.find_element(By.XPATH, "//table").text
         print("\nToxinPred Results:\n", result_table)
-        results = {}
+        results = []
         rows = driver.find_elements(By.XPATH, "//table//tr")
         for row in rows:
             cells = row.find_elements(By.TAG_NAME, "td")
@@ -52,11 +52,10 @@ def ToxinPred(peptide_list: list[str]):
             if cell_texts:
                 print(cell_texts)
                 if len(cell_texts) >= 3:
-                    results[cell_texts[0]] = {
-                        "sequence": cell_texts[0],
-                        "toxicity_score": cell_texts[1],
-                        "prediction": cell_texts[2]
-                    }
+                    results.append( {
+                        "sequence": cell_texts[1],
+                        "prediction": cell_texts[3]
+                    })
         return {"results": results}
     finally:
         driver.quit()

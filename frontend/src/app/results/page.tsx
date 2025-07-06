@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { PieChart, Pie, Cell } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -7,10 +7,31 @@ import ResultsTable from "@/components/ui/results_table"
 import RoundIcon from "@/components/ui/round_icon"
 import { Loader2 as Spinner } from 'lucide-react';
 
-const data_pie = [
-  { name: 'Antigen', value: 90 },
-  { name: 'Non-Antigen', value: 10 },
-];
+interface ResultEntry {
+  sequence: string;
+  binding_score: number;
+  rank: number;
+}
+
+interface ConservancyResult {
+  sequence: string;
+  conservation_score: number;
+}
+
+interface AntigenicityResult {
+  sequence: string;
+  antigen: boolean;
+}
+
+interface AllergenicityResult {
+  sequence: string;
+  allergen: boolean;
+}
+
+interface ToxicityResult {
+  sequence: string;
+  toxin: boolean;
+}
 
 const COLORS = ['#0088FE', '#FF8042'];
 
@@ -28,37 +49,108 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 };
 
 
-const data = [
-  {
-    "name": "AAACDEFGH",
-    "Conservation (%)": 96,
-  },
-  {
-    "name": "BCDEFGHIJ",
-    "Conservation (%)": 87,
-  },
-  {
-    "name": "CDEFGHIJK",
-    "Conservation (%)": 43,
-  }
-]
-
-interface ResultEntry {
-  sequence: string;
-  binding_score: number;
-  rank: number;
-}
-
-interface ConservancyResult {
-  sequence: string;
-  conservation_score: number;
-}
-
 export default function ResultsPage() {
 
     const [loading, setLoading] = useState(true);
     const [predictedPeptides, setPredictedPeptides] = useState<ResultEntry[]>([]);
     const [conservancyAnalysis, setConservancyAnalysis] = useState<ConservancyResult[]>([]);
+    const [antigenicityScreening, setAntigenicityScreening] = useState<AntigenicityResult[]>([]);
+    const [allergenicityScreening, setAllergenicityScreening] = useState<AllergenicityResult[]>([]);
+    const [toxicityScreening, setToxicityScreening] = useState<ToxicityResult[]>([]);
+
+    async function runScreenings(predictedPeptides: ResultEntry[]) {
+        const endpoints = [
+            {
+            name: 'Vaxijen',
+            url: process.env.NEXT_PUBLIC_API_ENDPOINT + 'antigenicity_screening/'
+            },
+            {
+            name: 'AlgPred2',
+            url: process.env.NEXT_PUBLIC_API_ENDPOINT + 'allergenicity_screening/'
+            },
+            {
+            name: 'ToxinPred',
+            url: process.env.NEXT_PUBLIC_API_ENDPOINT + 'toxicity_screening/'
+            }
+        ];
+
+        const payload = {
+            peptides: predictedPeptides.map(p => p.sequence)
+        };
+
+        const requests = endpoints.map(endpoint =>
+            fetch(endpoint.url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                throw new Error(`${endpoint.name} API request failed`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(`${endpoint.name} results:`, data);
+                if (endpoint.name === 'Vaxijen') {
+                    const antigenArray = Array.isArray(data) ? data : data.results;
+
+                    if (Array.isArray(antigenArray)) {
+                        setAntigenicityScreening(
+                        antigenArray.map((item) => ({
+                            sequence: item.Sequences,
+                            antigen: !!item.Antigen // ensures boolean
+                        }))
+                        );
+                    } else {
+                        console.warn("Vaxijen data is not an array:", data);
+                        setAntigenicityScreening([]);
+                    }
+
+                    console.log("Antigenicity Screening Results:", antigenicityScreening);
+                } else if (endpoint.name === 'AlgPred2') {
+                    const allergenArray = Array.isArray(data) ? data : data.results;
+                    if (Array.isArray(allergenArray)) {
+                        setAllergenicityScreening(allergenArray.map((item) => ({
+                        sequence: item.sequence,
+                        allergen: !!item.allergen // already boolean
+                        })));
+                    } else {
+                        console.warn("AlgPred2 data is not an array:", data);
+                        setAllergenicityScreening([]);
+                    }
+
+                    console.log("Allergenicity Screening Results:", allergenicityScreening);
+                } else if (endpoint.name === 'ToxinPred') {
+                    const toxicityArray = Array.isArray(data) ? data : data.results;
+  
+                    if (!Array.isArray(toxicityArray)) {
+                        console.warn("ToxinPred data is not an array:", data);
+                        setToxicityScreening([]);
+                        return;
+                    }
+
+                    setToxicityScreening(toxicityArray.map((item) => ({
+                        sequence: item.sequence,
+                        toxin: item.prediction === "Toxin"
+                    })));
+                    console.log("Toxicity Screening Results:", toxicityScreening);
+                }
+                return { name: endpoint.name, data };
+            })
+            .catch(err => {
+                console.error(`${endpoint.name} error:`, err);
+                return { name: endpoint.name, error: err.message };
+            })
+        );
+
+        const results = await Promise.all(requests);
+
+        console.log("All screening results:", results);
+        return results;
+        }
 
     useEffect(() => {
         async function runPipeline() {
@@ -101,6 +193,8 @@ export default function ResultsPage() {
                             console.log("Extracted peptide:", resultEntry);
                         }
                     }
+                    // Ensure predicted Peptides is only first 10 entries
+                    predictedPeptides.splice(10);
                     setPredictedPeptides(predictedPeptides);
                     console.log("Peptides extracted:", predictedPeptides);
                 } else {
@@ -142,78 +236,104 @@ export default function ResultsPage() {
                 console.error("API call failed:", err);
             }
 
-            // Assuming the peptides are the output from the previous step
-            const peptides = ["YLQPRTFLL", "FIAGLIAIV", "VLNDILSRL", "VLYENQKLI", "RLQSLQTYV", "KIADYNYKL", "RLDKVEAEV", "WTFGAGAAL", "IIRGWIFGT", "FVSNGTHWF"];
-            // Antigenicity Screening
-            try {
-              const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'antigenicity_screening/';
-                console.log("Endpoint: ", endpoint);
-                const response = await fetch(endpoint, {
-                    method: "POST",
-                    headers: {
-                    "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ peptides: predictedPeptides.map(p => p.sequence) })
-                });
+            // Run the antigenicity, allergenicity, and toxicity screenings asynchronously
+            console.log("Running antigenicity, allergenicity, and toxicity screenings...");
+            await runScreenings(predictedPeptides);
 
-              if (!response.ok) {
-                throw new Error("API request failed");
-              }
+            // // Antigenicity Screening
+            // try {
+            //   const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'antigenicity_screening/';
+            //     console.log("Endpoint: ", endpoint);
+            //     const response = await fetch(endpoint, {
+            //         method: "POST",
+            //         headers: {
+            //         "Content-Type": "application/json"
+            //         },
+            //         body: JSON.stringify({ peptides: predictedPeptides.map(p => p.sequence) })
+            //     });
 
-              const data = await response.json();
-              console.log("Vaxijen results:", data);
-            } catch (err) {
-              console.error(err);
-            }
+            //   if (!response.ok) {
+            //     throw new Error("API request failed");
+            //   }
 
-            // Allergenicity Screening
-            try {
-            const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'allergenicity_screening/';
-                console.log("Endpoint: ", endpoint);
-                const response = await fetch(endpoint, {
-                    method: "POST",
-                    headers: {
-                    "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ peptides: predictedPeptides.map(p => p.sequence) })
-                });
+            //   const data = await response.json();
+            //   console.log("Vaxijen results:", data);
+            // } catch (err) {
+            //   console.error(err);
+            // }
 
-            if (!response.ok) {
-                throw new Error("API request failed");
-            }
+            // // Allergenicity Screening
+            // try {
+            // const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'allergenicity_screening/';
+            //     console.log("Endpoint: ", endpoint);
+            //     const response = await fetch(endpoint, {
+            //         method: "POST",
+            //         headers: {
+            //         "Content-Type": "application/json"
+            //         },
+            //         body: JSON.stringify({ peptides: predictedPeptides.map(p => p.sequence) })
+            //     });
 
-            const data = await response.json();
-            console.log("AlgPred2 results:", data);
-            } catch (err) {
-            console.error(err);
-            }
+            // if (!response.ok) {
+            //     throw new Error("API request failed");
+            // }
 
-            // Toxicity Screening
-            try {
-            const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'toxicity_screening/';
-                console.log("Endpoint: ", endpoint);
-                const response = await fetch(endpoint, {
-                    method: "POST",
-                    headers: {
-                    "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ peptides: predictedPeptides.map(p => p.sequence) })
-                });
+            // const data = await response.json();
+            // console.log("AlgPred2 results:", data);
+            // } catch (err) {
+            // console.error(err);
+            // }
 
-            if (!response.ok) {
-                throw new Error("API request failed");
-            }
+            // // Toxicity Screening
+            // try {
+            // const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'toxicity_screening/';
+            //     console.log("Endpoint: ", endpoint);
+            //     const response = await fetch(endpoint, {
+            //         method: "POST",
+            //         headers: {
+            //         "Content-Type": "application/json"
+            //         },
+            //         body: JSON.stringify({ peptides: predictedPeptides.map(p => p.sequence) })
+            //     });
 
-            const data = await response.json();
-            console.log("ToxinPred results:", data);
-            } catch (err) {
-            console.error(err);
-            }
+            // if (!response.ok) {
+            //     throw new Error("API request failed");
+            // }
+
+            // const data = await response.json();
+            // console.log("ToxinPred results:", data);
+            // } catch (err) {
+            // console.error(err);
+            // }
             setLoading(false);
 
         }
         runPipeline();
     }, []);
+
+    const antigenicityPieData = useMemo(() => {
+        const antigenCount = antigenicityScreening.filter((item) => item.antigen).length;
+        return [
+            { name: "Antigen", value: antigenCount },
+            { name: "Non-Antigen", value: antigenicityScreening.length - antigenCount },
+        ];
+        }, [antigenicityScreening]);
+
+        const allergenicityPieData = useMemo(() => {
+        const allergenCount = allergenicityScreening.filter((item) => item.allergen).length;
+        return [
+            { name: "Allergen", value: allergenCount },
+            { name: "Non-Allergen", value: allergenicityScreening.length - allergenCount },
+        ];
+        }, [allergenicityScreening]);
+
+        const toxicityPieData = useMemo(() => {
+        const toxinCount = toxicityScreening.filter((item) => item.toxin).length;
+        return [
+            { name: "Toxin", value: toxinCount },
+            { name: "Non-Toxin", value: toxicityScreening.length - toxinCount },
+        ];
+    }, [toxicityScreening]);
 
     if (loading) {
         return (
@@ -280,7 +400,7 @@ export default function ResultsPage() {
                     <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
                         <h2 className="text-lg font-semibold mb-4">T-cell Epitope Prediction Results</h2>
                         <div className="w-full max-w-4xl">
-                            <ResultsTable data={peptides} />
+                            <ResultsTable data={predictedPeptides} />
                         </div>
                     </div>
                 </TabsContent>
@@ -300,60 +420,62 @@ export default function ResultsPage() {
                 <TabsContent value="step4">
                     <div className="flex flex-col items-center justify-center w-full h-full">
                         <PieChart width={400} height={400}>
-                            <Pie
-                                data={data_pie}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                label={renderCustomizedLabel}
-                                outerRadius={80}
-                                fill="#8884d8"
-                                dataKey="value"
-                            >
-                                {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
+                        <Pie
+                            data={antigenicityPieData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={renderCustomizedLabel}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                        >
+                            {antigenicityPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
                         </PieChart>
                     </div>
                 </TabsContent>
+
                 <TabsContent value="step5">
                     <div className="flex flex-col items-center justify-center w-full h-full">
                         <PieChart width={400} height={400}>
-                            <Pie
-                                data={data_pie}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                label={renderCustomizedLabel}
-                                outerRadius={80}
-                                fill="#8884d8"
-                                dataKey="value"
-                            >
-                                {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
+                        <Pie
+                            data={allergenicityPieData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={renderCustomizedLabel}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                        >
+                            {allergenicityPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
                         </PieChart>
                     </div>
                 </TabsContent>
+
                 <TabsContent value="step6">
                     <div className="flex flex-col items-center justify-center w-full h-full">
                         <PieChart width={400} height={400}>
-                            <Pie
-                                data={data_pie}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                label={renderCustomizedLabel}
-                                outerRadius={80}
-                                fill="#8884d8"
-                                dataKey="value"
-                            >
-                                {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
+                        <Pie
+                            data={toxicityPieData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={renderCustomizedLabel}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                        >
+                            {toxicityPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
                         </PieChart>
                     </div>
                 </TabsContent>

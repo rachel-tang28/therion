@@ -21,7 +21,6 @@ export default function ResultsTable({ data }: { data: ResultEntry[] }) {
   return (
     <div className="w-full max-w-4xl">
       <Table>
-        <TableCaption>Analysis Results</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead>Sequence</TableHead>
