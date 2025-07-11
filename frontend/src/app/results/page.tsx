@@ -5,7 +5,8 @@ import { PieChart, Pie, Cell } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ResultsTable from "@/components/ui/results_table"
 import RoundIcon from "@/components/ui/round_icon"
-import { Loader2 as Spinner } from 'lucide-react';
+import { Loader2, Zap } from "lucide-react"
+import Image from "next/image"
 
 interface ResultEntry {
   sequence: string;
@@ -36,7 +37,8 @@ interface ToxicityResult {
 const COLORS = ['#0088FE', '#FF8042'];
 
 const RADIAN = Math.PI / 180;
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, payload }) => {
+    const name = payload.name;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
@@ -49,6 +51,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 };
 
 
+
 export default function ResultsPage() {
 
     const [loading, setLoading] = useState(true);
@@ -57,6 +60,53 @@ export default function ResultsPage() {
     const [antigenicityScreening, setAntigenicityScreening] = useState<AntigenicityResult[]>([]);
     const [allergenicityScreening, setAllergenicityScreening] = useState<AllergenicityResult[]>([]);
     const [toxicityScreening, setToxicityScreening] = useState<ToxicityResult[]>([]);
+    const [cytokineAnalysis, setCytokineAnalysis] = useState<string>('');
+    const [progress, setProgress] = useState(1)
+    const [currentMessage, setCurrentMessage] = useState(1)
+    
+    const messages = [
+        "Processing sequence data...",
+        "Mapping potential T-cell epitopes...",
+        "Performing conservancy analysis...",
+        "Running antigenicity, allergenicity, and toxicity screening...",
+        "Performing cytokine analysis...",
+        "Population coverage analysis in progress...",
+    ]
+    
+    // // Simulate progress updates
+    // useEffect(() => {
+    //     const interval = setInterval(() => {
+    //     setProgress((prev) => {
+    //         if (prev >= 100) {
+    //         return 0 // Reset for demo purposes
+    //         }
+    //         return prev + Math.random() * 15
+    //     })
+    //     }, 800)
+    
+    //     return () => clearInterval(interval)
+    // }, [])
+    
+    // // Cycle through messages - increase interval for longer text
+    // useEffect(() => {
+    //     const interval = setInterval(() => {
+    //     setCurrentMessage((prev) => (prev + 1) % messages.length)
+    //     }, 4000) // Increased from 2000 to 4000ms
+    
+    //     return () => clearInterval(interval)
+    // }, [messages.length])
+    
+    // // Switch between indeterminate and determinate modes
+    // useEffect(() => {
+    //     const timeout = setTimeout(() => {
+    //     setIsIndeterminate(false)
+    //     }, 3000)
+    
+    //     return () => clearTimeout(timeout)
+    // }, [])
+    
+    // const estimatedTime = Math.max(1, Math.ceil((100 - progress) / 20))
+    
 
     async function runScreenings(predictedPeptides: ResultEntry[]) {
         const endpoints = [
@@ -149,6 +199,8 @@ export default function ResultsPage() {
         const results = await Promise.all(requests);
 
         console.log("All screening results:", results);
+        setProgress(prev => prev + 20)
+        setCurrentMessage((prev) => (prev + 1) % messages.length)
         return results;
         }
 
@@ -197,6 +249,8 @@ export default function ResultsPage() {
                     predictedPeptides.splice(10);
                     setPredictedPeptides(predictedPeptides);
                     console.log("Peptides extracted:", predictedPeptides);
+                    setProgress(prev => prev + 20)
+                    setCurrentMessage((prev) => (prev + 1) % messages.length)
                 } else {
                     console.error("Failed to predict epitopes.");
                     const errorData = await response.json();
@@ -232,14 +286,44 @@ export default function ResultsPage() {
                     conservation_score: item.conservation_score
                 }));
                 setConservancyAnalysis(conservancyResults);
+                setProgress(prev => prev + 20)
+                setCurrentMessage((prev) => (prev + 1) % messages.length)
+            } catch (err) {
+                console.error("API call failed:", err);
+            }
+            try {
+                const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'cytokine_analysis/';
+                console.log("Endpoint: ", endpoint);
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                        'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                throw new Error(`Error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log("Cytokine Analysis results:", result);
+                setCytokineAnalysis(result.image_url);
+                setProgress(prev => prev + 20)
+                setCurrentMessage((prev) => (prev + 1) % messages.length)
             } catch (err) {
                 console.error("API call failed:", err);
             }
 
             // Run the antigenicity, allergenicity, and toxicity screenings asynchronously
             console.log("Running antigenicity, allergenicity, and toxicity screenings...");
-            await runScreenings(predictedPeptides);
+            try {
+                await runScreenings(predictedPeptides);
+            } catch (err) {
+                console.error("Error during screenings:", err);
+            }
 
+            
             // // Antigenicity Screening
             // try {
             //   const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'antigenicity_screening/';
@@ -337,10 +421,75 @@ export default function ResultsPage() {
 
     if (loading) {
         return (
-        <div className="flex min-h-screen w-full items-center justify-center">
-            <Spinner />
-            <p>Running pipeline... please wait</p>
-        </div>
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4 animate-in fade-in duration-500">
+              <div className="w-full max-w-2xl mx-auto space-y-8">
+                {/* Header with animated icon */}
+                <div className="text-center space-y-4">
+                  <div className="relative inline-flex items-center justify-center">
+                    <div className="absolute inset-0 bg-indigo-500/20 dark:bg-indigo-400/20 rounded-full animate-ping"></div>
+                    <div className="relative bg-indigo-500 dark:bg-indigo-400 p-3 rounded-full">
+                        <div className="flex items-center justify-center w-12 h-12 text-white text-4xl animate-pulse opacity-100">🚀</div>
+                    </div>
+                  </div>
+        
+                  <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-200">Generating Your Results</h1>
+                </div>
+        
+                {/* Main progress section */}
+                <div className="space-y-6">
+                  {/* Progress bar */}
+                  <div className="space-y-3">
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-4 overflow-hidden shadow-inner">
+                        <div
+                          className="h-full bg-gradient-to-r from-yellow-500 to-red-600 rounded-full transition-all duration-500 ease-out relative overflow-hidden"
+                          style={{ width: `${Math.min(progress, 100)}%` }}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                        </div>
+                    </div>
+                    <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
+                    <span>{Math.round(progress) - 1}% complete</span>
+                    </div>
+                  </div>
+        
+                  {/* Animated status text */}
+                  <div className="text-center space-y-4">
+                    <div className="relative inline-block">
+                      <p className="text-lg text-slate-700 dark:text-slate-300 font-medium animate-shimmer-text">
+                        {messages[currentMessage]}
+                      </p>
+                    </div>
+        
+                    {/* Loading dots animation */}
+                    {/* <div className="flex items-center justify-center space-x-2">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                        <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                        <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"></div>
+                      </div>
+                    </div> */}
+                  </div>
+                </div>
+        
+                {/* Additional animated elements */}
+                <div className="flex justify-center space-x-8 opacity-60">
+                  <div className="flex items-center space-x-2 text-slate-500 dark:text-slate-400">
+                    <Zap className="w-4 h-4 animate-pulse" />
+                    <span className="text-sm">Real-Time Processing</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-slate-500 dark:text-slate-400">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">Analyzing Data</span>
+                  </div>
+                </div>
+        
+                {/* Subtle background animation */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  <div className="absolute -top-40 -right-40 w-80 h-80 bg-amber-400/10 rounded-full animate-pulse"></div>
+                  <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-400/10 rounded-full animate-pulse [animation-delay:1s]"></div>
+                </div>
+              </div>
+            </div>
         );
   }
 
@@ -406,14 +555,20 @@ export default function ResultsPage() {
                 </TabsContent>
                 <TabsContent value="step3">
                     <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
-                        <BarChart width={730} height={250} data={conservancyAnalysis}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="sequence" />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="conservation_score" fill="#8b5cf6" />
-                        </BarChart>
+                        <div className="w-full overflow-x-auto">
+                            <BarChart
+                                width={Math.max(800, conservancyAnalysis.length * 80)}
+                                height={250}
+                                data={conservancyAnalysis}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="sequence" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Bar dataKey="conservation_score" fill="#8b5cf6" />
+                            </BarChart>
+                        </div>
                     </div>
                     
                 </TabsContent>
@@ -434,6 +589,13 @@ export default function ResultsPage() {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
+                        <Tooltip />
+                        <Legend 
+                            layout="vertical" 
+                            verticalAlign="middle" 
+                            align="right"
+                        />
+
                         </PieChart>
                     </div>
                 </TabsContent>
@@ -455,6 +617,12 @@ export default function ResultsPage() {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
+                        <Tooltip />
+                        <Legend 
+                            layout="vertical" 
+                            verticalAlign="middle" 
+                            align="right"
+                        />
                         </PieChart>
                     </div>
                 </TabsContent>
@@ -476,7 +644,19 @@ export default function ResultsPage() {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
+                        <Tooltip />
+                        <Legend 
+                            layout="vertical" 
+                            verticalAlign="middle" 
+                            align="right"
+                        />
                         </PieChart>
+                    </div>
+                </TabsContent>
+                <TabsContent value="step7">
+                    <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
+                        <h2 className="text-lg font-semibold mb-4">Cytokine Analysis Results</h2>
+                        <Image src={`${process.env.NEXT_PUBLIC_API_ENDPOINT}${cytokineAnalysis}`} alt="C-ImmSim Result" />
                     </div>
                 </TabsContent>
             </Tabs>

@@ -2,7 +2,6 @@ import { Progress } from "@/components/ui/progress"
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,

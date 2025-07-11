@@ -2,6 +2,8 @@ from typing import Union
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 from fastapi import UploadFile, Request
 import os
 from pydantic import BaseModel
@@ -12,6 +14,10 @@ import pandas as pd
 from step3_antigenicity_screening.vaxijen_script import Vaxijen
 from step4_allergenicity_screening.algpred2 import AlgPred2
 from step5_toxicity_screening.toxinpred import ToxinPred
+from step6_cytokine_analysis.run_c_imm_sim import CImmSim
+from fastapi.responses import JSONResponse
+
+
 
 app = FastAPI()
 app.add_middleware(
@@ -21,6 +27,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # To run the server, use the command:
 # fastapi dev main.py
 
@@ -164,3 +172,15 @@ async def toxicity_screening(request: AntigenicityRequest):
     toxinpred_results = ToxinPred(request.peptides)
     print("ToxinPred Results:", toxinpred_results["results"])
     return toxinpred_results
+
+@app.post("/cytokine_analysis/")
+async def cytokine_analysis(request):
+    """
+    Cytokine analysis via C-ImmSim
+    """
+
+    print("Received cytokine analysis request with sequence:", global_sequence)
+    # Call the C-ImmSim function with the provided sequence
+    result = CImmSim(global_sequence)
+    print("C-ImmSim Result:", result)
+    return result
