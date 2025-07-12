@@ -15,7 +15,8 @@ from step3_antigenicity_screening.vaxijen_script import Vaxijen
 from step4_allergenicity_screening.algpred2 import AlgPred2
 from step5_toxicity_screening.toxinpred import ToxinPred
 from step6_cytokine_analysis.run_c_imm_sim import CImmSim
-from fastapi.responses import JSONResponse
+from step7_population_coverage.iedb import get_population_coverage
+from fastapi.responses import JSONResponse, FileResponse
 
 
 
@@ -35,6 +36,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Global variables
 # Global variable to store the uploaded sequence
 global_sequence: str = ""
+global_alleles: List[str] = []
 
 @app.get("/")
 def read_root():
@@ -85,6 +87,21 @@ async def upload_sequence(request: SequenceUpload):
     global global_sequence
     global_sequence = request.sequence
     return {"sequence": request.sequence}
+
+class AlleleUpload(BaseModel):
+    alleles: List[str]
+
+@app.post("/upload_alleles/")
+async def upload_alleles(request: AlleleUpload):
+    """
+    Handles allele uploads.
+    Returns the uploaded alleles.
+    """
+    print("Received alleles:", request.alleles)
+    global global_alleles
+    global_alleles = request.alleles
+    # Here you would handle the alleles as needed
+    return {"alleles": request.alleles}
 
 class EpitopePredictionRequest(BaseModel):
     alleles: str
@@ -174,7 +191,7 @@ async def toxicity_screening(request: AntigenicityRequest):
     return toxinpred_results
 
 @app.post("/cytokine_analysis/")
-async def cytokine_analysis(request):
+async def cytokine_analysis():
     """
     Cytokine analysis via C-ImmSim
     """
@@ -184,3 +201,22 @@ async def cytokine_analysis(request):
     result = CImmSim(global_sequence)
     print("C-ImmSim Result:", result)
     return result
+
+@app.post("/population_coverage/")
+async def population_coverage(request: AntigenicityRequest):
+    """
+    Population coverage via IEDB
+    """
+    print("Received population coverage request with epitopes:", request.peptides)
+    print("Received HLA alleles:", global_alleles)
+
+    # Call the get_population_coverage function with the provided epitopes and HLA alleles
+    result = get_population_coverage(request.peptides, global_alleles)
+    print("Population Coverage Result:", result)
+    
+    return result
+
+@app.get("/static/{filename}")
+async def get_image(filename: str):
+    file_path = os.path.join("results", filename)
+    return FileResponse(file_path)

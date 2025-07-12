@@ -61,6 +61,7 @@ export default function ResultsPage() {
     const [allergenicityScreening, setAllergenicityScreening] = useState<AllergenicityResult[]>([]);
     const [toxicityScreening, setToxicityScreening] = useState<ToxicityResult[]>([]);
     const [cytokineAnalysis, setCytokineAnalysis] = useState<string>('');
+    const [populationCoverage, setPopulationCoverage] = useState<string>("0");
     const [progress, setProgress] = useState(1)
     const [currentMessage, setCurrentMessage] = useState(1)
     
@@ -291,15 +292,13 @@ export default function ResultsPage() {
             } catch (err) {
                 console.error("API call failed:", err);
             }
+
+            // Cytokine analysis
             try {
                 const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'cytokine_analysis/';
                 console.log("Endpoint: ", endpoint);
                 const response = await fetch(endpoint, {
-                    method: "POST",
-                    headers: {
-                        'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-                        'Content-Type': 'application/json',
-                    },
+                    method: "POST"
                 });
 
                 if (!response.ok) {
@@ -308,7 +307,35 @@ export default function ResultsPage() {
 
                 const result = await response.json();
                 console.log("Cytokine Analysis results:", result);
-                setCytokineAnalysis(result.image_url);
+                setCytokineAnalysis(result.filename);
+                setProgress(prev => prev + 20)
+                setCurrentMessage((prev) => (prev + 1) % messages.length)
+            } catch (err) {
+                console.error("API call failed:", err);
+            }
+
+            // Population coverage analysis
+            try {
+                const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'population_coverage/';
+                console.log("Endpoint: ", endpoint);
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                        'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        peptides: predictedPeptides.map(p => p.sequence),
+                    })
+                });
+
+                if (!response.ok) {
+                throw new Error(`Error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log("Population coverage results:", result);
+                setPopulationCoverage(result.coverage);
                 setProgress(prev => prev + 20)
                 setCurrentMessage((prev) => (prev + 1) % messages.length)
             } catch (err) {
@@ -656,7 +683,16 @@ export default function ResultsPage() {
                 <TabsContent value="step7">
                     <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
                         <h2 className="text-lg font-semibold mb-4">Cytokine Analysis Results</h2>
-                        <Image src={`${process.env.NEXT_PUBLIC_API_ENDPOINT}${cytokineAnalysis}`} alt="C-ImmSim Result" />
+                        <Image src={`${process.env.NEXT_PUBLIC_API_ENDPOINT}static/${cytokineAnalysis}`} alt="C-ImmSim Result" width={500} height={500}/>
+                    </div>
+                </TabsContent>
+                <TabsContent value="step8">
+                    <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
+                        <h2 className="text-lg font-semibold mb-4">Population Coverage Results</h2>
+                        <div className='flex flex-col items-center justify-center w-full h-full'>  
+                            <h3>World Coverage: </h3>
+                            <p className="text-2xl font-bold">{populationCoverage}%</p>
+                        </div>
                     </div>
                 </TabsContent>
             </Tabs>
