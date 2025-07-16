@@ -5,10 +5,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
+import os
 
-def IEDB_conservancy_analysis(peptides: list[str], protein_sequence: str):
+UPLOAD_C_FOLDER = "/Users/rachell.tang/Documents/Thesis Project_Rachel Tang/thesis-project/backend/c_uploads"
+
+def IEDB_conservancy_analysis(peptides: list[str]):
     peptides_text = "\n".join(peptides)
-    protein_sequence = protein_sequence
 
     options = Options()
     options.add_argument("--headless=new")
@@ -22,7 +24,7 @@ def IEDB_conservancy_analysis(peptides: list[str], protein_sequence: str):
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
 
-    driver = webdriver.Chrome(options=options)
+    driver = webdriver.Chrome()
 
     # Remove navigator.webdriver to help avoid detection
     driver.execute_cdp_cmd(
@@ -44,15 +46,37 @@ def IEDB_conservancy_analysis(peptides: list[str], protein_sequence: str):
         )
         peptide_box.send_keys(peptides_text)
 
-        sequence_box = driver.find_element(By.NAME, "protein_sequence")
-        sequence_box.send_keys(protein_sequence)
+        # Upload file in c_uploads folder
+        # Should only be one file here
+        file_input = driver.find_element(By.NAME, "protein_file")
+        file_input.clear()  # Clear any existing value
+        # Use absolute path to the file
+        # Find the first file in the folder
+        conservancy_file_path = None
+        if os.path.exists(UPLOAD_C_FOLDER):
+            for filename in os.listdir(UPLOAD_C_FOLDER):
+                file_path = os.path.join(UPLOAD_C_FOLDER, filename)
+                if os.path.isfile(file_path):
+                    conservancy_file_path = file_path
+                    break  # Use the first file found
 
+        if conservancy_file_path is None:
+            raise FileNotFoundError("No conservancy file found in c_uploads folder.")
+
+        # Use conservancy_file_path in your selenium code:
+        file_input.send_keys(conservancy_file_path)
+        print(f"Using conservancy file: {conservancy_file_path}")
         submit_button = driver.find_element(By.XPATH, '//input[@type="submit" and @value="Submit"]')
         submit_button.click()
 
         WebDriverWait(driver, 60).until(
             EC.presence_of_element_located((By.XPATH, "//table"))
         )
+
+        if not driver.find_elements(By.XPATH, "//table"):
+            # Print the error message
+            print("No results table found after submission.")
+            raise TimeoutException("No results table found after submission.")
 
         rows = driver.find_elements(By.XPATH, "//table//tr")
         result_list = []
@@ -66,3 +90,8 @@ def IEDB_conservancy_analysis(peptides: list[str], protein_sequence: str):
 
     finally:
         driver.quit()
+
+if __name__ == "__main__":
+    peptides = ["YLQPRTFLL", "FIAGLIAIV", "KAFSPEVIPMF", "KTFPPTEPK"]
+    results = IEDB_conservancy_analysis(peptides)
+    print("Conservancy results:", results)

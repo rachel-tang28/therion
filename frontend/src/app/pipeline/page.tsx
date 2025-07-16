@@ -22,12 +22,17 @@ import { useRouter } from "next/navigation"
 
 export default function Pipeline() {
     const [ uploadedFiles, setUploadedFiles ] = useState<File[]>([]);
+    const [ uploadedConservancyFiles, setUploadedConservancyFiles ] = useState<File[]>([]);
     const [sequence, setSequence] = useState<string>('');
+    const [conservancySequence, setConservancySequence] = useState<string>('');
     const [advancedMode, setAdvancedMode] = useState(false);
     const [s2Consensus, setS2Consensus] = useState(false);
     const [error, setError] = useState(false);
+    const [conservancyError, setConservancyError] = useState(false);
+    const [popCovError, setPopCovError] = useState(false);
     const router = useRouter();
     const [fileUpload, setFileUpload] = useState(false);
+    const [conservancyFileUpload, setConservancyFileUpload] = useState(false);
     const [selectedAlleles, setSelectedAlleles] = useState<string[]>([]);
 
     // 2. Handler to toggle selection
@@ -36,9 +41,13 @@ export default function Pipeline() {
         setSelectedAlleles(prev => {
         if (prev.includes(allele)) {
             // Deselect
+            if (prev.length === 1) {
+                setPopCovError(true); // Set error if last allele is deselected
+            }
             return prev.filter(a => a !== allele);
         } else {
             // Select
+            setPopCovError(false); // Reset error state when an allele is selected
             return [...prev, allele];
         }
         });
@@ -76,12 +85,34 @@ export default function Pipeline() {
     setFileUpload(true);
   };
 
+  const handleConservancyFileUpload = (file: File | null) => {
+    if (file) {
+      setUploadedConservancyFiles((prev: File[]) => [...prev, file]);
+      console.log("File uploaded:", file);
+    }
+
+    setError(false); // Reset error state when a file is uploaded
+    setConservancyFileUpload(true);
+  };
+
   const handleSubmit = async (event: any) => {
     event.preventDefault();
 
     if (uploadedFiles.length === 0 && sequence.trim() === '') {
         setError(true);
         alert("Please upload a file or paste a sequence.");
+        return;
+    }
+
+    if (uploadedConservancyFiles.length === 0 && conservancySequence.trim() === '') {
+        setConservancyError(true);
+        alert("Please upload a file or paste a sequence for conservancy analysis.");
+        return;
+    }
+
+     if (selectedAlleles.length === 0) {
+        setPopCovError(true);
+        alert("Please select at least one HLA allele.");
         return;
     }
 
@@ -105,6 +136,78 @@ export default function Pipeline() {
                 console.error("Failed to upload alleles.");
                 const errorData = await response.json();
                 console.error("Failed to upload alleles:", errorData.detail);
+                alert("Error: " + errorData.detail);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    // Upload conservancy analysis files or sequence
+    if (uploadedConservancyFiles.length !== 0) {
+        const formData = new FormData();
+        uploadedConservancyFiles.forEach(file => {
+            formData.append('file_uploads', file);
+        });
+
+        try {
+            const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'upload_conservancy_file/';
+            console.log("Endpoint: ", endpoint);
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                // Clear files and redirect on success
+                setUploadedConservancyFiles([]); 
+
+            //   router.push('../projects');
+            } else {
+                console.error("Failed to upload files.");
+                const errorData = await response.json();
+                console.error("Failed to upload files:", errorData.detail);
+                alert("Error: " + errorData.detail);
+
+            //   router.push('/upload_files/');
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    } else {
+        // Check seqeunce is valid fasta format
+        const fastaRegex = /^>.*\n([ACDEFGHIKLMNPQRSTVWY\n]+)$/i;
+        if (!fastaRegex.test(sequence)) {
+            setConservancyError(true);
+            alert("Invalid sequence format for conservancy analysis. Please ensure it is in FASTA format.");
+            return;
+        }
+        setConservancyError(false);
+        // If sequence is valid, send to backend
+        console.log("Conservancy Sequence:", conservancySequence);
+        console.log("Stringified Conservancy Sequence:", JSON.stringify({ conservancySequence }));
+        try {
+            const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'upload_conservancy_sequence/';
+            console.log("Endpoint: ", endpoint);
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ conservancySequence })
+            });
+
+            if (response.ok) {
+                // Clear sequence and redirect on success
+                setConservancySequence('');
+            } else {
+                console.error("Failed to upload sequence.");
+                const errorData = await response.json();
+                console.error("Failed to upload sequence:", errorData.detail);
                 alert("Error: " + errorData.detail);
             }
         } catch (error) {
@@ -338,13 +441,40 @@ export default function Pipeline() {
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 3</Badge>
-                                <h1>Epitope Conservancy Analysis</h1>
+                                <h1 className={conservancyError ? "text-red-600" : ""}>Epitope Conservancy Analysis</h1>
+                                <Badge variant="required_badge">Required</Badge>
+                                {conservancyError && (
+                                    <Image src="/exclamation_emoji.svg" alt="Error Icon" width={16} height={16} className="flashing-error" />
+                                )}
                             </div>
-                            <h1 className="description-text">Analyse epitope conservation across variants</h1>
+                            <h1 className={conservancyError ? "description-text-error" : "description-text"}>Analyse epitope conservation across variants</h1>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
                         <div className="flex flex-col gap-[0px] first-box">
+                            <div className="flex flex-col gap-[0px] first-box">
+                            <div className="flex flex-col gap-[4px] w-full h-[100px]">
+                                <FileUpload setFile={handleConservancyFileUpload} />
+                            </div>
+                            <div className="flex flex-col w-full justify-center items-center justify-between">
+                                <h2 className="description-text">or</h2>
+                            </div>
+                            <h1 className="input-box-header">Paste Sequence(s)</h1>
+                            <div className="flex flex-col gap-[4px] w-full">
+                                <Textarea
+                                    className="input-text w-full min-h-[100px] items-start text-start align-top"
+                                    placeholder="Paste your sequence(s) here..."
+                                    disabled={conservancyFileUpload}
+                                    onChange={e => {
+                                        setConservancySequence(e.target.value);
+                                        setConservancyError(false);
+                                    }}
+                                ></Textarea>
+                            </div>
+                        </div>
+                        <div className="line-seperator-box">
+                            <div className="line-seperator"></div>
+                        </div>
                             <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
                                 <div className="flex flex-col gap-[8px] w-full">
                                     <h1 className="parameter-heading">Consensus Mode</h1>
@@ -685,59 +815,20 @@ export default function Pipeline() {
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 8</Badge>
-                                <h1>Population Coverage Analysis</h1>
+                                <h1 className={popCovError ? "text-red-600" : ""}>Population Coverage Analysis</h1>
+                                <Badge variant="required_badge">Required</Badge>
+                                {popCovError && (
+                                    <Image src="/exclamation_emoji.svg" alt="Error Icon" width={16} height={16} className="flashing-error" />
+                                )}
                             </div>
-                            <h1 className="description-text">Calculate population coverage</h1>
+                            <h1 className={popCovError ? "description-text-error" : "description-text"}>Calculate population coverage</h1>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
                         <div className="flex flex-col gap-[0px] first-box">
-                            <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
-                                <div className="flex flex-col gap-[8px] w-full">
-                                    <h1 className="parameter-heading">Consensus Mode</h1>
-                                    <h2 className="parameter-description">Use all available methods for consensus prediction</h2>
-                                </div>
-                                <Switch checked={s2Consensus} onCheckedChange={setS2Consensus}></Switch>
-                            </div>
-
-                            <h1 className={`parameter-heading transition-all duration-300 ease-in-out
-                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
-                                    overflow-hidden`}>Select Methods</h1>
-                            <div className={`
-                                    grid grid-cols-2 gap-[6px] w-full
-                                    transition-all duration-300 ease-in-out
-                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
-                                    overflow-hidden
-                                `}>
-                                <Toggle className="toggle-button" variant="outline">
-                                    {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
-                                    NetMHCpan
-                                </Toggle>
-                                <Toggle className="toggle-button" variant="outline">
-                                    {/* <Image src="/mhcflurry.svg" alt="MHCflurry Icon" width={16} height={16}></Image> */}
-                                    IEDB
-                                </Toggle>
-                                <Toggle className="toggle-button" variant="outline">
-                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
-                                    DeepMHC
-                                </Toggle>
-                                <Toggle className="toggle-button" variant="outline">
-                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
-                                    MHCflurry
-                                </Toggle>
-                            </div>
-                            {advancedMode && (
-                            <div className="flex w-full flex-col gap-[6px]">
-                                <div className="line-seperator-box">
-                                <div className="line-seperator"></div>
-                                </div>
-                                <div className="flex flex-row items-center gap-[12px]">
-                                <h1 className="input-box-header">Advanced Parameters</h1>
-                                <Badge variant="red">Advanced</Badge>
-                                </div>
-                                <div>
+                            <div>
                                 <h2 className="larger-parameter-heading">HLA Alleles</h2>
-                                <div className="flex flex-col mt-[8px] gap-[8px]">
+                                <div className="flex flex-col mt-[12px] gap-[8px]">
                                     <h1 className="parameter-heading">HLA-A</h1>
                                     <div className="flex flex-row flex-wrap gap-[6px] p-[4px]">
                                         {hlaA.map(allele => (
@@ -780,6 +871,54 @@ export default function Pipeline() {
                                     </div>
                                 </div>
                                 </div>
+                                <div className="line-seperator-box">
+                                    <div className="line-seperator"></div>
+                                </div>
+                            <div className="consensus-box flex flex-row justify-between items-center gap-[4px] w-full ">
+                                
+                                <div className="flex flex-col gap-[8px] w-full">
+                                    <h1 className="parameter-heading">Consensus Mode</h1>
+                                    <h2 className="parameter-description">Use all available methods for consensus prediction</h2>
+                                </div>
+                                <Switch checked={s2Consensus} onCheckedChange={setS2Consensus}></Switch>
+                            </div>
+
+                            <h1 className={`parameter-heading transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden`}>Select Methods</h1>
+                            <div className={`
+                                    grid grid-cols-2 gap-[6px] w-full
+                                    transition-all duration-300 ease-in-out
+                                    ${s2Consensus ? "opacity-0 max-h-0 pointer-events-none" : "opacity-100 max-h-40"}
+                                    overflow-hidden
+                                `}>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
+                                    NetMHCpan
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/mhcflurry.svg" alt="MHCflurry Icon" width={16} height={16}></Image> */}
+                                    IEDB
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    DeepMHC
+                                </Toggle>
+                                <Toggle className="toggle-button" variant="outline">
+                                    {/* <Image src="/iedb.svg" alt="IEDB Icon" width={16} height={16}></Image> */}
+                                    MHCflurry
+                                </Toggle>
+                            </div>
+                            {advancedMode && (
+                            <div className="flex w-full flex-col gap-[6px]">
+                                <div className="line-seperator-box">
+                                <div className="line-seperator"></div>
+                                </div>
+                                <div className="flex flex-row items-center gap-[12px]">
+                                <h1 className="input-box-header">Advanced Parameters</h1>
+                                <Badge variant="red">Advanced</Badge>
+                                </div>
+                                
                             </div>
                             )}
                         </div>

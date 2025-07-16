@@ -30,12 +30,16 @@ app.add_middleware(
 )
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Print current directory
+print("Current Directory:", os.getcwd())
+
 # To run the server, use the command:
 # fastapi dev main.py
 
 # Global variables
 # Global variable to store the uploaded sequence
 global_sequence: str = ""
+global_conservancy_sequence: str = ""
 global_alleles: List[str] = []
 
 @app.get("/")
@@ -88,6 +92,48 @@ async def upload_sequence(request: SequenceUpload):
     global_sequence = request.sequence
     return {"sequence": request.sequence}
 
+UPLOAD_C_FOLDER = "c_uploads"
+os.makedirs(UPLOAD_C_FOLDER, exist_ok=True)
+
+@app.post("/upload_conservancy_file/")
+async def create_upload_conservancy_file(file_uploads: list[UploadFile], request: Request):
+    """
+    Handles file uploads.
+    Returns a list of successfully uploaded filenames.
+    """
+
+    filenames = []
+    for file_upload in file_uploads:
+        data = await file_upload.read()
+        print(f"Sequence from file {data}")
+        # Convert into FASTA format string
+        fasta_sequence = f"{data.decode('utf-8')}"
+        # Store the sequence in the global variable
+        global global_sequence
+        global_sequence = fasta_sequence
+        print(f"FASTA Sequence: {fasta_sequence}")
+        save_to = os.path.join(UPLOAD_C_FOLDER, file_upload.filename)
+        with open(save_to, 'wb') as f:
+            f.write(data)
+        filenames.append(file_upload.filename)
+
+    return {"filenames": filenames}
+
+
+class ConservancySequenceUpload(BaseModel):
+    conservancySequence: str
+
+@app.post("/upload_conservancy_sequence/")
+async def upload_conservancy_sequence(request: ConservancySequenceUpload):
+    """
+    Handles sequence uploads.
+    Returns the uploaded sequence.
+    """
+    print("Received sequence:", request.conservancySequence)
+    global global__conservancy_sequence
+    global__conservancy_sequence = request.conservancySequence
+    return {"conservancy_sequence": request.conservancySequence}
+
 class AlleleUpload(BaseModel):
     alleles: List[str]
 
@@ -126,7 +172,7 @@ async def conservancy_analysis(request: ConservancyAnalysisRequest):
     """
     Function for conservancy analysis via. IEDB Script.
     """
-    result = IEDB_conservancy_analysis(request.peptides, global_sequence)
+    result = IEDB_conservancy_analysis(request.peptides)
     print("Conservancy Analysis Result:", result)
     # Extract seuences and conservation scores
     cleaned_results = []
@@ -220,3 +266,20 @@ async def population_coverage(request: AntigenicityRequest):
 async def get_image(filename: str):
     file_path = os.path.join("results", filename)
     return FileResponse(file_path)
+
+# On refresh or server restart, clear c_upload and upload folder
+@app.on_event("shutdown")
+async def shutdown_event():
+    # Clear the upload folder
+    if os.path.exists(UPLOAD_FOLDER):
+        for filename in os.listdir(UPLOAD_FOLDER):
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+    
+    # Clear the c_upload folder
+    if os.path.exists(UPLOAD_C_FOLDER):
+        for filename in os.listdir(UPLOAD_C_FOLDER):
+            file_path = os.path.join(UPLOAD_C_FOLDER, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
