@@ -18,6 +18,7 @@ import RoundIcon from "@/components/ui/round_icon"
 
 
 import { useRouter } from "next/navigation"
+import { Chat } from "@/components/ui/chat";
 
 
 export default function Pipeline() {
@@ -931,7 +932,7 @@ export default function Pipeline() {
             
         </main>
         <footer className="footer_style flex mt-auto w-full">
-            
+            <Chat />
         </footer>
     </div>
   );

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 
 import { useRouter } from "next/navigation"
-
+import { Chat } from "@/components/ui/chat"
 
 export default function Dashboard() {
   const [ uploadedFiles, setUploadedFiles ] = useState<File[]>([]);
@@ -91,7 +91,7 @@ export default function Dashboard() {
             <Image src="/upload.svg" alt="Upload File" width={16} height={16} priority />
           </Button>
         </div>
-        
+        <Chat />
       </main>
       <footer className="footer_style flex mt-auto w-full">
         

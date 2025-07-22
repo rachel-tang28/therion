@@ -17,7 +17,9 @@ from step5_toxicity_screening.toxinpred import ToxinPred
 from step6_cytokine_analysis.run_c_imm_sim import CImmSim
 from step7_population_coverage.iedb import get_population_coverage
 from fastapi.responses import JSONResponse, FileResponse
-
+from groq import Groq
+from dotenv import load_dotenv
+load_dotenv()
 
 
 app = FastAPI()
@@ -29,6 +31,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+api_key = os.getenv("GROQ_API_KEY")
+if not api_key:
+    raise ValueError("GROQ_API_KEY environment variable not set.")
+
+client = Groq(
+    api_key=api_key,
+)
 
 # Print current directory
 print("Current Directory:", os.getcwd())
@@ -270,6 +280,43 @@ async def population_coverage(request: PopCovRequest):
 async def get_image(filename: str):
     file_path = os.path.join("results", filename)
     return FileResponse(file_path)
+
+### CHATBOT ENDPOINTS ###
+class Message(BaseModel):
+    role: str
+    content: str
+
+messages = [
+    Message(role="ai", content="Hello! How can I help you today?"),
+    Message(role="user", content="Can you tell me about the latest research in AI?"),
+    Message(role="ai", content="Sure! There are many exciting developments in AI, including advancements in natural language processing, computer vision, and reinforcement learning. For example, large language models like GPT-3 have shown remarkable capabilities in generating human-like text and understanding context. In computer vision, convolutional neural networks (CNNs) continue to improve image recognition tasks, while reinforcement learning has led to breakthroughs in game playing and robotics. Additionally, AI ethics and fairness are becoming increasingly important topics of discussion, as researchers and practitioners strive to ensure that AI systems are transparent, accountable, and unbiased.")
+]
+@app.get("/chat_messages/")
+async def get_chat_messages():
+    """
+    Endpoint to get all chat messages.
+    """
+    return {"messages": messages}
+
+@app.post("/chat_messages/")
+async def post_chat_messages(request: Message):
+    """
+    Endpoint to post a new chat message.
+    """
+    messages.append(Message(role="user", content=request.content))
+    api_messages = []
+    for m in messages:
+        # Map your internal "ai" to "assistant" for the API
+        api_role = "assistant" if m.role == "ai" else m.role
+        api_messages.append({"role": api_role, "content": m.content})
+
+    chat_completion = client.chat.completions.create(
+        messages=api_messages,
+        model="llama-3.3-70b-versatile",
+    )
+    print(chat_completion.choices[0].message.content)
+    messages.append(Message(role="ai", content=chat_completion.choices[0].message.content))
+    return {"message": "Message added successfully."}
 
 # On refresh or server restart, clear c_upload and upload folder
 @app.on_event("shutdown")
