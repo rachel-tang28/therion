@@ -248,16 +248,20 @@ async def cytokine_analysis():
     print("C-ImmSim Result:", result)
     return result
 
+class PopCovRequest(BaseModel):
+    peptides: List[str]
+    alleles: List[str]
+
 @app.post("/population_coverage/")
-async def population_coverage(request: AntigenicityRequest):
+async def population_coverage(request: PopCovRequest):
     """
     Population coverage via IEDB
     """
     print("Received population coverage request with epitopes:", request.peptides)
-    print("Received HLA alleles:", global_alleles)
+    print("Received HLA alleles:", request.alleles)
 
     # Call the get_population_coverage function with the provided epitopes and HLA alleles
-    result = get_population_coverage(request.peptides, global_alleles)
+    result = get_population_coverage(request.peptides, request.alleles)
     print("Population Coverage Result:", result)
     
     return result

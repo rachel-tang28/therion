@@ -96,7 +96,8 @@ def get_population_coverage(epitope_list: list[str], hla_alleles: list[str]):
             peptide_cell.send_keys(epitope)
 
             hla_cell.clear()
-            hla_cell.send_keys(", ".join(hla_alleles))
+            # Send corresponding index of allele in allele list
+            hla_cell.send_keys(hla_alleles[idx - 1])
             # time.sleep(1) 
 
         print("✅ All epitopes and HLA alleles entered!")

@@ -1,0 +1,741 @@
+"use client";
+import React, { useState, useEffect, useMemo } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell } from 'recharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import ResultsTable from "@/components/ui/results_table"
+import ResultsCompleteTable from "@/components/ui/results_summary"
+import RoundIcon from "@/components/ui/round_icon"
+import { Loader2, Zap } from "lucide-react"
+import Image from "next/image"
+
+interface ResultEntry {
+  sequence: string;
+  binding_score: number;
+  rank: number;
+}
+
+interface ResultCompleteEntry {
+  sequence: string;
+  binding_score: number;
+  hla_alleles: string[];
+  antigen: boolean;
+  allergen: boolean;
+  toxin: boolean;
+  rank: number;
+}
+
+interface ConservancyResult {
+  sequence: string;
+  conservation_score: number;
+}
+
+interface AntigenicityResult {
+  sequence: string;
+  antigen: boolean;
+}
+
+interface AllergenicityResult {
+  sequence: string;
+  allergen: boolean;
+}
+
+interface ToxicityResult {
+  sequence: string;
+  toxin: boolean;
+}
+
+const COLORS = ['#0088FE', '#FF8042'];
+
+const RADIAN = Math.PI / 180;
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, payload }) => {
+    const name = payload.name;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
+
+
+
+export default function ResultsPage() {
+
+    const [loading, setLoading] = useState(true);
+    const [predictedPeptides, setPredictedPeptides] = useState<ResultEntry[]>([]);
+    const [conservancyAnalysis, setConservancyAnalysis] = useState<ConservancyResult[]>([]);
+    const [antigenicityScreening, setAntigenicityScreening] = useState<AntigenicityResult[]>([]);
+    const [allergenicityScreening, setAllergenicityScreening] = useState<AllergenicityResult[]>([]);
+    const [toxicityScreening, setToxicityScreening] = useState<ToxicityResult[]>([]);
+    const [cytokineAnalysis, setCytokineAnalysis] = useState<string>('');
+    const [populationCoverage, setPopulationCoverage] = useState<string>("0");
+    const [progress, setProgress] = useState(1)
+    const [currentMessage, setCurrentMessage] = useState(1)
+    const [results, setResults] = useState<ResultCompleteEntry[]>([]);
+    
+    const messages = [
+        "Processing sequence data...",
+        "Mapping potential T-cell epitopes...",
+        "Performing conservancy analysis...",
+        "Running antigenicity, allergenicity, and toxicity screening...",
+        "Performing cytokine analysis...",
+        "Population coverage analysis in progress...",
+    ]
+    
+    const hardcordedResults = [
+        {
+            sequence: "VLSPADKTNVK",
+            binding_score: 0.5,
+            hla_alleles: ["HLA-A*02:01"],
+            antigen: true,
+            allergen: false,
+            toxin: false,
+            rank: 1
+        },
+        {
+            sequence: "TSTLQEQIGW",
+            binding_score: 0.3,
+            hla_alleles: ["HLA-B*07:02"],
+            antigen: false,
+            allergen: true,
+            toxin: false,
+            rank: 2
+        },
+        {
+            sequence: "GAGGAGGAGG",
+            binding_score: 0.8,
+            hla_alleles: ["HLA-A*01:01"],
+            antigen: true,
+            allergen: false,
+            toxin: true,
+            rank: 3
+        },
+        {
+            sequence: "KLVFFAEDV",
+            binding_score: 0.6,
+            hla_alleles: ["HLA-A*02:01"],
+            antigen: true,
+            allergen: false,
+            toxin: false,
+            rank: 4
+        },
+        {
+            sequence: "YVDDTQFQF",
+            binding_score: 0.4,
+            hla_alleles: ["HLA-B*07:02"],
+            antigen: false,
+            allergen: true,
+            toxin: false,
+            rank: 5
+        }
+    ]
+    // // Simulate progress updates
+    // useEffect(() => {
+    //     const interval = setInterval(() => {
+    //     setProgress((prev) => {
+    //         if (prev >= 100) {
+    //         return 0 // Reset for demo purposes
+    //         }
+    //         return prev + Math.random() * 15
+    //     })
+    //     }, 800)
+    
+    //     return () => clearInterval(interval)
+    // }, [])
+    
+    // // Cycle through messages - increase interval for longer text
+    // useEffect(() => {
+    //     const interval = setInterval(() => {
+    //     setCurrentMessage((prev) => (prev + 1) % messages.length)
+    //     }, 4000) // Increased from 2000 to 4000ms
+    
+    //     return () => clearInterval(interval)
+    // }, [messages.length])
+    
+    // // Switch between indeterminate and determinate modes
+    // useEffect(() => {
+    //     const timeout = setTimeout(() => {
+    //     setIsIndeterminate(false)
+    //     }, 3000)
+    
+    //     return () => clearTimeout(timeout)
+    // }, [])
+    
+    // const estimatedTime = Math.max(1, Math.ceil((100 - progress) / 20))
+    
+
+    async function runScreenings(predictedPeptides: ResultEntry[]) {
+        const endpoints = [
+            {
+            name: 'Vaxijen',
+            url: process.env.NEXT_PUBLIC_API_ENDPOINT + 'antigenicity_screening/'
+            },
+            {
+            name: 'AlgPred2',
+            url: process.env.NEXT_PUBLIC_API_ENDPOINT + 'allergenicity_screening/'
+            },
+            {
+            name: 'ToxinPred',
+            url: process.env.NEXT_PUBLIC_API_ENDPOINT + 'toxicity_screening/'
+            }
+        ];
+
+        const payload = {
+            peptides: predictedPeptides.map(p => p.sequence)
+        };
+
+        const requests = endpoints.map(endpoint =>
+            fetch(endpoint.url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                throw new Error(`${endpoint.name} API request failed`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(`${endpoint.name} results:`, data);
+                if (endpoint.name === 'Vaxijen') {
+                    const antigenArray = Array.isArray(data) ? data : data.results;
+
+                    if (Array.isArray(antigenArray)) {
+                        setAntigenicityScreening(
+                        antigenArray.map((item) => ({
+                            sequence: item.Sequences,
+                            antigen: !!item.Antigen // ensures boolean
+                        }))
+                        );
+                        // set the associoated sequence's antigenicity in results
+                        setResults(prevResults => [
+                            ...prevResults,
+                            ...antigenArray.map((item) => ({
+                                ...item,
+                                antigen: !!item.Antigen, // ensures boolean
+                            }))
+                        ]);
+                        console.log("Updated results: ", results);
+                    } else {
+                        console.warn("Vaxijen data is not an array:", data);
+                        setAntigenicityScreening([]);
+                    }
+
+                    console.log("Antigenicity Screening Results:", antigenicityScreening);
+                } else if (endpoint.name === 'AlgPred2') {
+                    const allergenArray = Array.isArray(data) ? data : data.results;
+                    if (Array.isArray(allergenArray)) {
+                        setAllergenicityScreening(allergenArray.map((item) => ({
+                        sequence: item.sequence,
+                        allergen: !!item.allergen // already boolean
+                        })));
+                        setResults(prevResults => [
+                            ...prevResults,
+                            ...allergenArray.map((item) => ({
+                                ...item,
+                                allergen: !!item.allergen, // ensures boolean
+                            }))
+                        ]);
+                        console.log("Updated results: ", results);
+                    } else {
+                        console.warn("AlgPred2 data is not an array:", data);
+                        setAllergenicityScreening([]);
+                    }
+
+                    console.log("Allergenicity Screening Results:", allergenicityScreening);
+                } else if (endpoint.name === 'ToxinPred') {
+                    const toxicityArray = Array.isArray(data) ? data : data.results;
+  
+                    if (!Array.isArray(toxicityArray)) {
+                        console.warn("ToxinPred data is not an array:", data);
+                        setToxicityScreening([]);
+                        return;
+                    }
+
+                    setToxicityScreening(toxicityArray.map((item) => ({
+                        sequence: item.sequence,
+                        toxin: item.prediction === "Toxin"
+                    })));
+                    setResults(prevResults => [
+                        ...prevResults,
+                        ...toxicityArray.map((item) => ({
+                            ...item,
+                            toxin: !!item.toxin, // ensures boolean
+                        }))
+                    ]);
+                    console.log("Toxicity Screening Results:", toxicityScreening);
+                    console.log("Updated results: ", results);
+                }
+                return { name: endpoint.name, data };
+            })
+            .catch(err => {
+                console.error(`${endpoint.name} error:`, err);
+                return { name: endpoint.name, error: err.message };
+            })
+        );
+
+        const results = await Promise.all(requests);
+
+        console.log("All screening results:", results);
+        setProgress(prev => prev + 20)
+        setCurrentMessage((prev) => (prev + 1) % messages.length)
+        return results;
+        }
+
+    useEffect(() => {
+        async function runPipeline() {
+            if (predictedPeptides.length > 0) {
+                console.log("Peptides already extracted, skipping epitope prediction.");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                console.log("Starting epitope prediction...");
+                const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'epitope_prediction/';
+                console.log("Endpoint: ", endpoint);
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                        'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        alleles: "HLA-A*01:01, HLA-A*02:01, HLA-A*02:03, HLA-A*02:06, HLA-A*03:01, HLA-A*11:01, HLA-A*23:01, HLA-A*24:02, HLA-A*26:01, HLA-A*30:01, HLA-A*30:02, HLA-A*31:01, HLA-A*32:01, HLA-A*33:01, HLA-A*68:01, HLA-A*68:02, HLA-B*07:02, HLA-B*08:01, HLA-B*15:01, HLA-B*35:01, HLA-B*40:01, HLA-B*44:02, HLA-B*44:03, HLA-B*51:01, HLA-B*53:01, HLA-B*57:01, HLA-B*58:01",
+                        methods: ["netmhcpan_el"]
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log("Epitope prediction result:", data);
+                    // Extract peptides from the response
+                    let count = 1;
+                    for (const item of data) {
+                        if (item.sequence) {
+                            // Build the ResultEntry object
+                            const resultEntry: ResultEntry = {
+                                sequence: item.sequence,
+                                binding_score: Math.round(item.weighted_score * 10 * 10) / 10, // Round to 1 decimal place
+                                rank: count++
+                            };
+                            predictedPeptides.push(resultEntry);
+                            console.log("Extracted peptide:", resultEntry);
+                        }
+                    }
+                    // Ensure predicted Peptides is only first 10 entries
+                    predictedPeptides.splice(10);
+                    setPredictedPeptides(predictedPeptides);
+                    setResults(predictedPeptides.map((p, index) => ({
+                        sequence: p.sequence,
+                        binding_score: p.binding_score,
+                        hla_alleles: [], // Assuming no HLA alleles in epitope prediction response
+                        antigen: false, // Placeholder, will be updated later
+                        allergen: false, // Placeholder, will be updated later
+                        toxin: false, // Placeholder, will be updated later
+                        rank: index + 1 // Rank based on order of peptides
+                    })));
+                    console.log("Peptides extracted:", predictedPeptides);
+                    console.log("Results updated:", results);
+                    setProgress(prev => prev + 20)
+                    setCurrentMessage((prev) => (prev + 1) % messages.length)
+                } else {
+                    console.error("Failed to predict epitopes.");
+                    const errorData = await response.json();
+                    console.error("Failed to predict epitopes:", errorData.detail);
+                }
+            } catch (error) {
+                console.error("Error during epitope prediction:", error);
+            }
+            
+            try {
+                const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'conservancy_analysis/';
+                console.log("Endpoint: ", endpoint);
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                        'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        peptides: predictedPeptides.map(p => p.sequence),
+                    })
+                });
+
+                if (!response.ok) {
+                throw new Error(`Error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log("Conservancy results:", result);
+                // Assuming the result is an array of objects with sequence and conservation_score
+                const conservancyResults: ConservancyResult[] = result.map((item: ConservancyResult) => ({
+                    sequence: item.sequence,
+                    conservation_score: item.conservation_score
+                }));
+                setConservancyAnalysis(conservancyResults);
+                setProgress(prev => prev + 20)
+                setCurrentMessage((prev) => (prev + 1) % messages.length)
+            } catch (err) {
+                console.error("API call failed:", err);
+            }
+
+            // Cytokine analysis
+            try {
+                const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'cytokine_analysis/';
+                console.log("Endpoint: ", endpoint);
+                const response = await fetch(endpoint, {
+                    method: "POST"
+                });
+
+                if (!response.ok) {
+                throw new Error(`Error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log("Cytokine Analysis results:", result);
+                setCytokineAnalysis(result.filename);
+                setProgress(prev => prev + 20)
+                setCurrentMessage((prev) => (prev + 1) % messages.length)
+            } catch (err) {
+                console.error("API call failed:", err);
+            }
+
+            // Population coverage analysis
+            try {
+                const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'population_coverage/';
+                console.log("Endpoint: ", endpoint);
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                        'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        peptides: predictedPeptides.map(p => p.sequence),
+                    })
+                });
+
+                if (!response.ok) {
+                throw new Error(`Error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log("Population coverage results:", result);
+                setPopulationCoverage(result.coverage);
+                setProgress(prev => prev + 20)
+                setCurrentMessage((prev) => (prev + 1) % messages.length)
+            } catch (err) {
+                console.error("API call failed:", err);
+            }
+
+            // Run the antigenicity, allergenicity, and toxicity screenings asynchronously
+            console.log("Running antigenicity, allergenicity, and toxicity screenings...");
+            try {
+                await runScreenings(predictedPeptides);
+            } catch (err) {
+                console.error("Error during screenings:", err);
+            }
+
+            
+            // // Antigenicity Screening
+            // try {
+            //   const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'antigenicity_screening/';
+            //     console.log("Endpoint: ", endpoint);
+            //     const response = await fetch(endpoint, {
+            //         method: "POST",
+            //         headers: {
+            //         "Content-Type": "application/json"
+            //         },
+            //         body: JSON.stringify({ peptides: predictedPeptides.map(p => p.sequence) })
+            //     });
+
+            //   if (!response.ok) {
+            //     throw new Error("API request failed");
+            //   }
+
+            //   const data = await response.json();
+            //   console.log("Vaxijen results:", data);
+            // } catch (err) {
+            //   console.error(err);
+            // }
+
+            // // Allergenicity Screening
+            // try {
+            // const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'allergenicity_screening/';
+            //     console.log("Endpoint: ", endpoint);
+            //     const response = await fetch(endpoint, {
+            //         method: "POST",
+            //         headers: {
+            //         "Content-Type": "application/json"
+            //         },
+            //         body: JSON.stringify({ peptides: predictedPeptides.map(p => p.sequence) })
+            //     });
+
+            // if (!response.ok) {
+            //     throw new Error("API request failed");
+            // }
+
+            // const data = await response.json();
+            // console.log("AlgPred2 results:", data);
+            // } catch (err) {
+            // console.error(err);
+            // }
+
+            // // Toxicity Screening
+            // try {
+            // const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'toxicity_screening/';
+            //     console.log("Endpoint: ", endpoint);
+            //     const response = await fetch(endpoint, {
+            //         method: "POST",
+            //         headers: {
+            //         "Content-Type": "application/json"
+            //         },
+            //         body: JSON.stringify({ peptides: predictedPeptides.map(p => p.sequence) })
+            //     });
+
+            // if (!response.ok) {
+            //     throw new Error("API request failed");
+            // }
+
+            // const data = await response.json();
+            // console.log("ToxinPred results:", data);
+            // } catch (err) {
+            // console.error(err);
+            // }
+            setLoading(false);
+
+        }
+        runPipeline();
+    }, []);
+
+    const antigenicityPieData = useMemo(() => {
+        const antigenCount = antigenicityScreening.filter((item) => item.antigen).length;
+        return [
+            { name: "Antigen", value: antigenCount },
+            { name: "Non-Antigen", value: antigenicityScreening.length - antigenCount },
+        ];
+        }, [antigenicityScreening]);
+
+        const allergenicityPieData = useMemo(() => {
+        const allergenCount = allergenicityScreening.filter((item) => item.allergen).length;
+        return [
+            { name: "Allergen", value: allergenCount },
+            { name: "Non-Allergen", value: allergenicityScreening.length - allergenCount },
+        ];
+        }, [allergenicityScreening]);
+
+        const toxicityPieData = useMemo(() => {
+        const toxinCount = toxicityScreening.filter((item) => item.toxin).length;
+        return [
+            { name: "Toxin", value: toxinCount },
+            { name: "Non-Toxin", value: toxicityScreening.length - toxinCount },
+        ];
+    }, [toxicityScreening]);
+
+    return (
+        <div className="min-h-screen max-h-screen min-w-screen max-w-screen flex flex-col main-box-1">
+            {/* <h1 className="main-heading-1">Hello 👋🏼</h1> */}
+            <main className="pr-[55px] mt-[18px] gap-[18px] w-full max-h-3/5 overflow-scroll flex flex-col w-full gap-[16px] normal-box items-center justify-center">
+            <div className="flex flex-col h-full">
+            <h1 className="main-heading-1">Pipeline Results</h1>
+            <p className="mb-8">This is the results page where you can view the analysis results.</p>
+            <Tabs defaultValue="step2" className="w-full">
+                <TabsList className='w-full h-[80px] flex items-center justify-between bg-muted p-[8px] text-muted-foreground gap-[12px]'>
+                    <TabsTrigger value="summary">
+                        <div className="flex flex-col items-center gap-[4px] w-full">
+                            <RoundIcon imageSrc="/memo.svg"></RoundIcon>
+                            <h1>Results Summary</h1>
+                        </div>
+                    </TabsTrigger>
+                    <TabsTrigger value="step2">
+                        <div className="flex flex-col items-center gap-[4px] w-full">
+                            <RoundIcon imageSrc="/dna_emoji.svg"></RoundIcon>
+                            <h1>T-Cell Epitope Prediction</h1>
+                        </div>
+                    </TabsTrigger>
+                    <TabsTrigger value="step3">
+                        <div className="flex flex-col items-center gap-[4px] w-full">
+                            <RoundIcon imageSrc="/tree_emoji.svg"></RoundIcon>
+                            <h1>Conservancy Analysis</h1>
+                        </div>
+                    </TabsTrigger>
+                    <TabsTrigger value="step4">
+                        <div className="flex flex-col items-center gap-[4px] w-full">
+                            <RoundIcon imageSrc="/shield_emoji.svg"></RoundIcon>
+                            <h1>Antigenicity Screening</h1>
+                        </div>
+                    </TabsTrigger>
+                    <TabsTrigger value="step5">
+                        <div className="flex flex-col items-center gap-[4px] w-full">
+                            <RoundIcon imageSrc="/pill_emoji.svg"></RoundIcon>
+                            <h1>Allergenicity Screening</h1>
+                        </div>
+                    </TabsTrigger>
+                    <TabsTrigger value="step6">
+                        <div className="flex flex-col items-center gap-[4px] w-full">
+                            <RoundIcon imageSrc="/biohazard_emoji.svg"></RoundIcon>
+                            <h1>Toxicity Screening</h1>
+                        </div>
+                    </TabsTrigger>
+                    <TabsTrigger value="step7">
+                        <div className="flex flex-col items-center gap-[4px] w-full">
+                            <RoundIcon imageSrc="/barchart_emoji.svg"></RoundIcon>
+                            <h1>Cytokine Analysis</h1>
+                        </div>
+                    </TabsTrigger>
+                    <TabsTrigger value="step8">
+                        <div className="flex flex-col items-center gap-[4px] w-full">
+                            <RoundIcon imageSrc="/globe_emoji.svg"></RoundIcon>
+                            <h1>Population Coverage</h1>
+                        </div>
+                    </TabsTrigger>
+                </TabsList>
+                <TabsContent value="summary">
+                    <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
+                        <h2 className="text-lg font-semibold mb-4">T-cell Epitope Prediction Results</h2>
+                        <div className="w-full max-w-4xl">
+                            <ResultsCompleteTable data={hardcordedResults} />
+                        </div>
+                    </div>
+                </TabsContent>
+                <TabsContent value="step2">
+                    <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
+                        <h2 className="text-lg font-semibold mb-4">T-cell Epitope Prediction Results</h2>
+                        <div className="w-full max-w-4xl">
+                            <ResultsTable data={predictedPeptides} />
+                        </div>
+                    </div>
+                </TabsContent>
+                <TabsContent value="step3">
+                    <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
+                        <div className="w-full overflow-x-auto">
+                            <BarChart
+                                width={Math.max(800, conservancyAnalysis.length * 80)}
+                                height={250}
+                                data={conservancyAnalysis}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="sequence" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Bar dataKey="conservation_score" fill="#8b5cf6" />
+                            </BarChart>
+                        </div>
+                    </div>
+                    
+                </TabsContent>
+                <TabsContent value="step4">
+                    <div className="flex flex-col items-center justify-center w-full h-full">
+                        <PieChart width={400} height={400}>
+                        <Pie
+                            data={antigenicityPieData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={renderCustomizedLabel}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                        >
+                            {antigenicityPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend 
+                            layout="vertical" 
+                            verticalAlign="middle" 
+                            align="right"
+                        />
+
+                        </PieChart>
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="step5">
+                    <div className="flex flex-col items-center justify-center w-full h-full">
+                        <PieChart width={400} height={400}>
+                        <Pie
+                            data={allergenicityPieData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={renderCustomizedLabel}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                        >
+                            {allergenicityPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend 
+                            layout="vertical" 
+                            verticalAlign="middle" 
+                            align="right"
+                        />
+                        </PieChart>
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="step6">
+                    <div className="flex flex-col items-center justify-center w-full h-full">
+                        <PieChart width={400} height={400}>
+                        <Pie
+                            data={toxicityPieData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={renderCustomizedLabel}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                        >
+                            {toxicityPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend 
+                            layout="vertical" 
+                            verticalAlign="middle" 
+                            align="right"
+                        />
+                        </PieChart>
+                    </div>
+                </TabsContent>
+                <TabsContent value="step7">
+                    <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
+                        <h2 className="text-lg font-semibold mb-4">Cytokine Analysis Results</h2>
+                        <Image src={`${process.env.NEXT_PUBLIC_API_ENDPOINT}static/${cytokineAnalysis}`} alt="C-ImmSim Result" width={500} height={500}/>
+                    </div>
+                </TabsContent>
+                <TabsContent value="step8">
+                    <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
+                        <h2 className="text-lg font-semibold mb-4">Population Coverage Results</h2>
+                        <div className='flex flex-col items-center justify-center w-full h-full'>  
+                            <h3>World Coverage: </h3>
+                            <p className="text-2xl font-bold">{populationCoverage}%</p>
+                        </div>
+                    </div>
+                </TabsContent>
+            </Tabs>
+            </div>
+            </main>
+            <footer className="footer_style flex mt-auto w-full">
+                
+            </footer>
+            </div>
+    );
+                            
+}

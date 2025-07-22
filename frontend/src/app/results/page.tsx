@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'rec
 import { PieChart, Pie, Cell } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ResultsTable from "@/components/ui/results_table"
+import ResultsCompleteTable from "@/components/ui/results_summary"
 import RoundIcon from "@/components/ui/round_icon"
 import { Loader2, Zap } from "lucide-react"
 import Image from "next/image"
@@ -11,6 +12,17 @@ import Image from "next/image"
 interface ResultEntry {
   sequence: string;
   binding_score: number;
+  allele: string;
+  rank: number;
+}
+
+interface ResultCompleteEntry {
+  sequence: string;
+  binding_score: number;
+  allele: string;
+  antigen: boolean;
+  allergen: boolean;
+  toxin: boolean;
   rank: number;
 }
 
@@ -64,6 +76,7 @@ export default function ResultsPage() {
     const [populationCoverage, setPopulationCoverage] = useState<string>("0");
     const [progress, setProgress] = useState(1)
     const [currentMessage, setCurrentMessage] = useState(1)
+    const [results, setResults] = useState<ResultCompleteEntry[]>([]);
     
     const messages = [
         "Processing sequence data...",
@@ -152,9 +165,18 @@ export default function ResultsPage() {
                         setAntigenicityScreening(
                         antigenArray.map((item) => ({
                             sequence: item.Sequences,
-                            antigen: !!item.Antigen // ensures boolean
+                            antigen: !!item.antigen // ensures boolean
                         }))
                         );
+                        // set the associoated sequence's antigenicity in results
+                        setResults(prevResults => [
+                            ...prevResults,
+                            ...antigenArray.map((item) => ({
+                                ...item,
+                                antigen: !!item.antigen, // ensures boolean
+                            }))
+                        ]);
+                        console.log("Updated results: ", results);
                     } else {
                         console.warn("Vaxijen data is not an array:", data);
                         setAntigenicityScreening([]);
@@ -168,6 +190,14 @@ export default function ResultsPage() {
                         sequence: item.sequence,
                         allergen: !!item.allergen // already boolean
                         })));
+                        setResults(prevResults => [
+                            ...prevResults,
+                            ...allergenArray.map((item) => ({
+                                ...item,
+                                allergen: !!item.allergen, // ensures boolean
+                            }))
+                        ]);
+                        console.log("Updated results: ", results);
                     } else {
                         console.warn("AlgPred2 data is not an array:", data);
                         setAllergenicityScreening([]);
@@ -187,7 +217,15 @@ export default function ResultsPage() {
                         sequence: item.sequence,
                         toxin: item.prediction === "Toxin"
                     })));
+                    setResults(prevResults => [
+                        ...prevResults,
+                        ...toxicityArray.map((item) => ({
+                            ...item,
+                            toxin: !!item.toxin, // ensures boolean
+                        }))
+                    ]);
                     console.log("Toxicity Screening Results:", toxicityScreening);
+                    console.log("Updated results: ", results);
                 }
                 return { name: endpoint.name, data };
             })
@@ -224,8 +262,8 @@ export default function ResultsPage() {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        alleles: "HLA-A*02:01,HLA-B*07:02", // Replace with actual alleles
-                        methods: ["netmhcpan_el"] // Replace with actual methods
+                        alleles: "HLA-A*01:01, HLA-A*02:01, HLA-A*02:03, HLA-A*02:06, HLA-A*03:01, HLA-A*11:01, HLA-A*23:01, HLA-A*24:02, HLA-A*26:01, HLA-A*30:01, HLA-A*30:02, HLA-A*31:01, HLA-A*32:01, HLA-A*33:01, HLA-A*68:01, HLA-A*68:02, HLA-B*07:02, HLA-B*08:01, HLA-B*15:01, HLA-B*35:01, HLA-B*40:01, HLA-B*44:02, HLA-B*44:03, HLA-B*51:01, HLA-B*53:01, HLA-B*57:01, HLA-B*58:01",
+                        methods: ["netmhcpan_el"]
                     })
                 });
 
@@ -240,6 +278,7 @@ export default function ResultsPage() {
                             const resultEntry: ResultEntry = {
                                 sequence: item.sequence,
                                 binding_score: Math.round(item.weighted_score * 10 * 10) / 10, // Round to 1 decimal place
+                                allele: item.allele,
                                 rank: count++
                             };
                             predictedPeptides.push(resultEntry);
@@ -249,9 +288,21 @@ export default function ResultsPage() {
                     // Ensure predicted Peptides is only first 10 entries
                     predictedPeptides.splice(10);
                     setPredictedPeptides(predictedPeptides);
-                    console.log("Peptides extracted:", predictedPeptides);
-                    setProgress(prev => prev + 20)
-                    setCurrentMessage((prev) => (prev + 1) % messages.length)
+                    if (results.length < 10) {
+                        setResults(predictedPeptides.map((p, index) => ({
+                            sequence: p.sequence,
+                            binding_score: p.binding_score,
+                            allele: p.allele,
+                            antigen: false, // Placeholder, will be updated later
+                            allergen: false, // Placeholder, will be updated later
+                            toxin: false, // Placeholder, will be updated later
+                            rank: index + 1 // Rank based on order of peptides
+                        })));
+                        console.log("Peptides extracted:", predictedPeptides);
+                        console.log("Results updated:", results);
+                        setProgress(prev => prev + 20)
+                        setCurrentMessage((prev) => (prev + 1) % messages.length)
+                    }
                 } else {
                     console.error("Failed to predict epitopes.");
                     const errorData = await response.json();
@@ -326,6 +377,7 @@ export default function ResultsPage() {
                     },
                     body: JSON.stringify({
                         peptides: predictedPeptides.map(p => p.sequence),
+                        alleles: predictedPeptides.map(p => p.allele)
                     })
                 });
 
@@ -527,8 +579,14 @@ export default function ResultsPage() {
             <div className="flex flex-col h-full">
             <h1 className="main-heading-1">Pipeline Results</h1>
             <p className="mb-8">This is the results page where you can view the analysis results.</p>
-            <Tabs defaultValue="step2" className="w-full">
+            <Tabs defaultValue="summary" className="w-full">
                 <TabsList className='w-full h-[80px] flex items-center justify-between bg-muted p-[8px] text-muted-foreground gap-[12px]'>
+                    <TabsTrigger value="summary">
+                        <div className="flex flex-col items-center gap-[4px] w-full">
+                            <RoundIcon imageSrc="/memo.svg"></RoundIcon>
+                            <h1>Results Summary</h1>
+                        </div>
+                    </TabsTrigger>
                     <TabsTrigger value="step2">
                         <div className="flex flex-col items-center gap-[4px] w-full">
                             <RoundIcon imageSrc="/dna_emoji.svg"></RoundIcon>
@@ -572,6 +630,14 @@ export default function ResultsPage() {
                         </div>
                     </TabsTrigger>
                 </TabsList>
+                <TabsContent value="summary">
+                    <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
+                        <h2 className="text-lg font-semibold mb-4">T-cell Epitope Prediction Results</h2>
+                        <div className="w-full max-w-4xl">
+                            <ResultsCompleteTable data={results} />
+                        </div>
+                    </div>
+                </TabsContent>
                 <TabsContent value="step2">
                     <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
                         <h2 className="text-lg font-semibold mb-4">T-cell Epitope Prediction Results</h2>

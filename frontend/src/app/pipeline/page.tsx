@@ -29,51 +29,50 @@ export default function Pipeline() {
     const [s2Consensus, setS2Consensus] = useState(false);
     const [error, setError] = useState(false);
     const [conservancyError, setConservancyError] = useState(false);
-    const [popCovError, setPopCovError] = useState(false);
     const router = useRouter();
     const [fileUpload, setFileUpload] = useState(false);
     const [conservancyFileUpload, setConservancyFileUpload] = useState(false);
-    const [selectedAlleles, setSelectedAlleles] = useState<string[]>([]);
+    // const [selectedAlleles, setSelectedAlleles] = useState<string[]>([]);
 
     // 2. Handler to toggle selection
-    const handleToggle = (allele: string) => {
-        console.log("Selected Alleles:", selectedAlleles);
-        setSelectedAlleles(prev => {
-        if (prev.includes(allele)) {
-            // Deselect
-            if (prev.length === 1) {
-                setPopCovError(true); // Set error if last allele is deselected
-            }
-            return prev.filter(a => a !== allele);
-        } else {
-            // Select
-            setPopCovError(false); // Reset error state when an allele is selected
-            return [...prev, allele];
-        }
-        });
-    };
+    // const handleToggle = (allele: string) => {
+    //     console.log("Selected Alleles:", selectedAlleles);
+    //     setSelectedAlleles(prev => {
+    //     if (prev.includes(allele)) {
+    //         // Deselect
+    //         if (prev.length === 1) {
+    //             setPopCovError(true); // Set error if last allele is deselected
+    //         }
+    //         return prev.filter(a => a !== allele);
+    //     } else {
+    //         // Select
+    //         setPopCovError(false); // Reset error state when an allele is selected
+    //         return [...prev, allele];
+    //     }
+    //     });
+    // };
 
-    // 3. Create final list with "HLA-" prefix
-    const finalSelections = selectedAlleles.map(allele => `HLA-${allele}`);
-    console.log('Selections to send:', finalSelections);
+    // // 3. Create final list with "HLA-" prefix
+    // const finalSelections = selectedAlleles.map(allele => `HLA-${allele}`);
+    // console.log('Selections to send:', finalSelections);
 
-    // 5. Example list of alleles for each gene
-    const hlaA = [
-        'A*01:01', 'A*02:01', 'A*02:06', 'A*03:01', 'A*11:01', 'A*23:01', 'A*24:02',
-        'A*25:01', 'A*26:01', 'A*29:02', 'A*30:01', 'A*31:01', 'A*32:01', 'A*33:01',
-        'A*34:01', 'A*66:01', 'A*68:01', 'A*69:01', 'A*74:01'
-    ];
+    // // 5. Example list of alleles for each gene
+    // const hlaA = [
+    //     'A*01:01', 'A*02:01', 'A*02:06', 'A*03:01', 'A*11:01', 'A*23:01', 'A*24:02',
+    //     'A*25:01', 'A*26:01', 'A*29:02', 'A*30:01', 'A*31:01', 'A*32:01', 'A*33:01',
+    //     'A*34:01', 'A*66:01', 'A*68:01', 'A*69:01', 'A*74:01'
+    // ];
 
-    const hlaB = [
-        'B*07:02', 'B*08:01', 'B*13:02', 'B*15:01', 'B*18:01', 'B*27:05', 'B*35:01',
-        'B*37:01', 'B*38:01', 'B*39:01', 'B*40:01', 'B*44:02', 'B*44:03', 'B*51:01',
-        'B*52:01', 'B*53:01', 'B*57:01', 'B*58:01', 'B*73:01'
-    ];
+    // const hlaB = [
+    //     'B*07:02', 'B*08:01', 'B*13:02', 'B*15:01', 'B*18:01', 'B*27:05', 'B*35:01',
+    //     'B*37:01', 'B*38:01', 'B*39:01', 'B*40:01', 'B*44:02', 'B*44:03', 'B*51:01',
+    //     'B*52:01', 'B*53:01', 'B*57:01', 'B*58:01', 'B*73:01'
+    // ];
 
-    const hlaC = [
-        'C*01:02', 'C*02:02', 'C*03:03', 'C*04:01', 'C*05:01', 'C*06:02',
-        'C*07:01', 'C*07:02', 'C*08:01', 'C*12:03', 'C*14:02', 'C*15:02'
-    ];
+    // const hlaC = [
+    //     'C*01:02', 'C*02:02', 'C*03:03', 'C*04:01', 'C*05:01', 'C*06:02',
+    //     'C*07:01', 'C*07:02', 'C*08:01', 'C*12:03', 'C*14:02', 'C*15:02'
+    // ];
 
   const handleFileUpload = (file: File | null) => {
     if (file) {
@@ -110,38 +109,38 @@ export default function Pipeline() {
         return;
     }
 
-     if (selectedAlleles.length === 0) {
-        setPopCovError(true);
-        alert("Please select at least one HLA allele.");
-        return;
-    }
+    //  if (selectedAlleles.length === 0) {
+    //     setPopCovError(true);
+    //     alert("Please select at least one HLA allele.");
+    //     return;
+    // }
 
-    // Upload allele selections
-    if (selectedAlleles.length > 0) {
-        try {
-            const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'upload_alleles/';
-            console.log("Endpoint: ", endpoint);
-            const response = await fetch(endpoint, {
-                method: "POST",
-                headers: {
-                    'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ alleles: finalSelections })
-            });
+    // // Upload allele selections
+    // if (selectedAlleles.length > 0) {
+    //     try {
+    //         const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'upload_alleles/';
+    //         console.log("Endpoint: ", endpoint);
+    //         const response = await fetch(endpoint, {
+    //             method: "POST",
+    //             headers: {
+    //                 'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+    //                 'Content-Type': 'application/json',
+    //             },
+    //             body: JSON.stringify({ alleles: finalSelections })
+    //         });
 
-            if (response.ok) {
-                console.log("Alleles uploaded successfully.");
-            } else {
-                console.error("Failed to upload alleles.");
-                const errorData = await response.json();
-                console.error("Failed to upload alleles:", errorData.detail);
-                alert("Error: " + errorData.detail);
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    }
+    //         if (response.ok) {
+    //             console.log("Alleles uploaded successfully.");
+    //         } else {
+    //             console.error("Failed to upload alleles.");
+    //             const errorData = await response.json();
+    //             console.error("Failed to upload alleles:", errorData.detail);
+    //             alert("Error: " + errorData.detail);
+    //         }
+    //     } catch (error) {
+    //         console.error(error);
+    //     }
+    // }
 
     // Upload conservancy analysis files or sequence
     if (uploadedConservancyFiles.length !== 0) {
@@ -815,20 +814,16 @@ export default function Pipeline() {
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 8</Badge>
-                                <h1 className={popCovError ? "text-red-600" : ""}>Population Coverage Analysis</h1>
-                                <Badge variant="required_badge">Required</Badge>
-                                {popCovError && (
-                                    <Image src="/exclamation_emoji.svg" alt="Error Icon" width={16} height={16} className="flashing-error" />
-                                )}
+                                <h1>Population Coverage Analysis</h1>
                             </div>
-                            <h1 className={popCovError ? "description-text-error" : "description-text"}>Calculate population coverage</h1>
+                            <h1 className="description-text">Calculate population coverage</h1>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
                         <div className="flex flex-col gap-[0px] first-box">
                             <div>
                                 <h2 className="larger-parameter-heading">HLA Alleles</h2>
-                                <div className="flex flex-col mt-[12px] gap-[8px]">
+                                {/* <div className="flex flex-col mt-[12px] gap-[8px]">
                                     <h1 className="parameter-heading">HLA-A</h1>
                                     <div className="flex flex-row flex-wrap gap-[6px] p-[4px]">
                                         {hlaA.map(allele => (
@@ -869,7 +864,7 @@ export default function Pipeline() {
                                             </Toggle>
                                         ))}
                                     </div>
-                                </div>
+                                </div> */}
                                 </div>
                                 <div className="line-seperator-box">
                                     <div className="line-seperator"></div>

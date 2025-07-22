@@ -87,11 +87,20 @@ def run_method(sequence: str, alleles: str, method_name: str):
             break
         if time.time() - start_time > 30:
             print("Timeout reached while waiting for results.")
+        if time.time() - start_time > 80:
+            print("Long wait time, exiting.")
+            return []
         
         print("Waiting for results...")
         time.sleep(2)
 
     #### READING RESULTS ####
+    print("Results:", json.dumps(result, indent=2))
+
+    output_filename = "iedb_output.json"
+    with open(output_filename, "w") as f:
+        json.dump(result, f, indent=2)
+
     peptide_table = None
     for entry in result["data"]["results"]:
         if entry["type"] == "peptide_table":
@@ -107,13 +116,16 @@ def run_method(sequence: str, alleles: str, method_name: str):
 
     peptide_idx = col_idx.get("peptide")
     score_idx = col_idx.get(config["score_column"]) or col_idx.get("predictions_score")
-    if peptide_idx is None or score_idx is None:
-        raise ValueError(f"Columns not found: peptide or {config['score_column']}")
+    allele = col_idx.get("allele")
+    if allele:
+        print("Alleles:", allele)
+    if peptide_idx is None or score_idx is None or allele is None:
+        raise ValueError(f"Columns not found: peptide or {config['score_column']} or allele")
 
     top_peptides = sorted(data_rows, key=lambda r: float(r[score_idx]), reverse=True)[:10]
 
     result = [
-        {"sequence": row[peptide_idx], "score": float(row[score_idx])}
+        {"sequence": row[peptide_idx], "score": float(row[score_idx]), "allele": row[allele]}
         for row in top_peptides
     ]
 
@@ -136,12 +148,13 @@ def IEDB_epitope_prediction(sequence: str, alleles: str, methods: list):
         for rank, entry in enumerate(results):
             seq = entry["sequence"]
             score = entry["score"]
+            allele = entry["allele"]
             weight = len(results) - rank
             combined.setdefault(seq, 0)
             combined[seq] += score * weight
 
     consensus = [
-        {"sequence": seq, "weighted_score": combined_score}
+        {"sequence": seq, "weighted_score": combined_score, "allele": allele}
         for seq, combined_score in combined.items()
     ]
     consensus.sort(key=lambda x: x["weighted_score"], reverse=True)

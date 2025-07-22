@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 interface ResultEntry {
   sequence: string;
   binding_score: number;
+  allele: string;
   rank: number;
 }
 
@@ -23,7 +24,7 @@ export default function ResultsTable({ data }: { data: ResultEntry[] }) {
         <TableHeader>
           <TableRow>
             <TableHead>Sequence</TableHead>
-            {/* <TableHead>HLA Allele</TableHead> */}
+            <TableHead>HLA Allele</TableHead>
             <TableHead>Binding Score</TableHead>
             <TableHead>Rank</TableHead>
           </TableRow>
@@ -32,7 +33,7 @@ export default function ResultsTable({ data }: { data: ResultEntry[] }) {
           {data.map((item, index) => (
             <TableRow key={index}>
               <TableCell>{item.sequence}</TableCell>
-              {/* <TableCell>{item.hla_allele}</TableCell> */}
+              <TableCell>{item.allele}</TableCell>
               <TableCell className="flex items-center flex-row gap-[8px]">
                 <h3>{item.binding_score}</h3>
                 <Progress value={item.binding_score} />
