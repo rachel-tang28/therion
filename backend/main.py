@@ -304,7 +304,7 @@ async def post_chat_messages(request: Message):
     """
     messages.append(Message(role="user", content=request.content))
     api_messages = []
-
+    
     system_context = f"""
         You are a bioinformatics assistant helping with a multi-step epitope prediction and vaccine design pipeline.
 
