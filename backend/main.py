@@ -288,9 +288,8 @@ class Message(BaseModel):
 
 messages = [
     Message(role="ai", content="Hello! How can I help you today?"),
-    Message(role="user", content="Can you tell me about the latest research in AI?"),
-    Message(role="ai", content="Sure! There are many exciting developments in AI, including advancements in natural language processing, computer vision, and reinforcement learning. For example, large language models like GPT-3 have shown remarkable capabilities in generating human-like text and understanding context. In computer vision, convolutional neural networks (CNNs) continue to improve image recognition tasks, while reinforcement learning has led to breakthroughs in game playing and robotics. Additionally, AI ethics and fairness are becoming increasingly important topics of discussion, as researchers and practitioners strive to ensure that AI systems are transparent, accountable, and unbiased.")
 ]
+
 @app.get("/chat_messages/")
 async def get_chat_messages():
     """
@@ -305,6 +304,24 @@ async def post_chat_messages(request: Message):
     """
     messages.append(Message(role="user", content=request.content))
     api_messages = []
+
+    system_context = f"""
+        You are a bioinformatics assistant helping with a multi-step epitope prediction and vaccine design pipeline.
+
+        Current known context:
+        - Uploaded sequence: {global_sequence[:100] + '...' if len(global_sequence) > 100 else global_sequence or 'None'}
+        - Conservancy sequence: {global_conservancy_sequence[:100] + '...' if len(global_conservancy_sequence) > 100 else global_conservancy_sequence or 'None'}
+        - Selected HLA alleles: {', '.join(global_alleles) if global_alleles else 'None'}
+
+        Use this context to guide your responses.
+        """.strip()
+    
+    api_messages.append({
+        "role": "system",
+        "content": system_context
+    })
+
+
     for m in messages:
         # Map your internal "ai" to "assistant" for the API
         api_role = "assistant" if m.role == "ai" else m.role

@@ -834,11 +834,10 @@
 
 .user-message {
   display: flex;
-  width: 289px;
-  padding: 16px;
+  padding: 12px;
   color: white;
   justify-content: flex-end;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 10px;
   border-radius: 12px 12px 0px 12px;
   background: rgb(58, 58, 58);
