@@ -287,7 +287,7 @@ class Message(BaseModel):
     content: str
 
 messages = [
-    Message(role="ai", content="Hello! How can I help you today?"),
+    Message(role="ai", content="Hello! I'm *Thio*, your bioinformatics assistant. How can I help you today?"),
 ]
 
 @app.get("/chat_messages/")
@@ -304,9 +304,9 @@ async def post_chat_messages(request: Message):
     """
     messages.append(Message(role="user", content=request.content))
     api_messages = []
-    
+
     system_context = f"""
-        You are a bioinformatics assistant helping with a multi-step epitope prediction and vaccine design pipeline.
+        Your name is Thio. You are a bioinformatics assistant helping with a multi-step epitope prediction and vaccine design pipeline.
 
         Current known context:
         - Uploaded sequence: {global_sequence[:100] + '...' if len(global_sequence) > 100 else global_sequence or 'None'}
