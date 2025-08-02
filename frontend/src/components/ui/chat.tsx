@@ -19,7 +19,7 @@ export function Chat() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
+  const [loading, setLoading] = useState(false)
 
   // Retrieve messages from backend
   useEffect(() => {
@@ -63,6 +63,7 @@ export function Chat() {
     const messageContent = input.value.trim()
 
     if (!messageContent) return
+    setLoading(true)
 
     // Add user message to state
     setMessages((prev) => [...prev, { role: "user", content: messageContent }])
@@ -87,6 +88,7 @@ export function Chat() {
         console.log("Response from AI:", data)
         setMessages((prev) => [...prev, { role: "ai", content: data.response }])
         fetchMessages() // Refresh messages after sending
+        setLoading(false)
       } else {
         console.error("Failed to send message.")
         const errorData = await response.json()
@@ -139,6 +141,9 @@ export function Chat() {
                 <UserMessage key={index} message={message.content} />
               )
             ))}
+            {loading && (
+              <AIMessage message="Loading..." />
+            )}
             <div ref={messagesEndRef} />
           </div>
 

@@ -24,7 +24,7 @@ def IEDB_conservancy_analysis(peptides: list[str]):
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
 
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(options=options)
 
     # Remove navigator.webdriver to help avoid detection
     driver.execute_cdp_cmd(

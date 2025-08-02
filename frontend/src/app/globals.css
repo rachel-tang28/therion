@@ -843,3 +843,27 @@
   background: rgb(58, 58, 58);
   box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.20);
 }
+
+/*Three dot animation*/
+.loading-message {
+  display: flex;
+  padding: 16px;
+  gap: 10px;
+  align-self: stretch;
+  border-radius: 12px 12px 12px 0px;
+  background: #DEE2E6;
+  box-shadow: 0px 2px 1px 0px rgba(0, 0, 0, 0.05);
+  animation: loadingDots 1.5s infinite;
+}
+
+@keyframes loadingDots {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}

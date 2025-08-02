@@ -51,6 +51,7 @@ print("Current Directory:", os.getcwd())
 global_sequence: str = ""
 global_conservancy_sequence: str = ""
 global_alleles: List[str] = []
+global_sequence_and_alleles: List[dict] = []
 
 @app.get("/")
 def read_root():
@@ -170,8 +171,12 @@ async def epitope_prediction(request: EpitopePredictionRequest):
     """
     # Here you would call your epitope prediction logic
     print("Received epitope prediction request:")
-    output = IEDB_epitope_prediction(global_sequence, request.alleles, request.methods)
+    output, hla_alleles = IEDB_epitope_prediction(global_sequence, request.alleles, request.methods)
     print("Output from IEDB:", output)
+    print("HLA Alleles from IEDB:", hla_alleles)
+    global global_sequence_and_alleles
+    global_sequence_and_alleles = hla_alleles
+    print("Global Sequence and Alleles updated:", global_sequence_and_alleles)
     return output
 
 class ConservancyAnalysisRequest(BaseModel):
@@ -271,7 +276,7 @@ async def population_coverage(request: PopCovRequest):
     print("Received HLA alleles:", request.alleles)
 
     # Call the get_population_coverage function with the provided epitopes and HLA alleles
-    result = get_population_coverage(request.peptides, request.alleles)
+    result = get_population_coverage(global_sequence_and_alleles)
     print("Population Coverage Result:", result)
     
     return result
@@ -306,21 +311,35 @@ async def post_chat_messages(request: Message):
     api_messages = []
 
     system_context = f"""
-        Your name is Thio. You are a bioinformatics assistant helping with a multi-step epitope prediction and vaccine design pipeline.
+    You are Thio, an AI assistant embedded in Therion — a bioinformatics platform for in-silico vaccine design. You help users navigate and interpret a multi-step epitope prediction and vaccine development pipeline.
 
-        Current known context:
-        - Uploaded sequence: {global_sequence[:100] + '...' if len(global_sequence) > 100 else global_sequence or 'None'}
-        - Conservancy sequence: {global_conservancy_sequence[:100] + '...' if len(global_conservancy_sequence) > 100 else global_conservancy_sequence or 'None'}
-        - Selected HLA alleles: {', '.join(global_alleles) if global_alleles else 'None'}
+    Current known context:
+    - Uploaded sequence: {global_sequence[:100] + '...' if len(global_sequence) > 100 else global_sequence or 'None'}
+    - Conservancy sequence: {global_conservancy_sequence[:100] + '...' if len(global_conservancy_sequence) > 100 else global_conservancy_sequence or 'None'}
+    - Selected HLA alleles: {', '.join(global_alleles) if global_alleles else 'None'}
 
-        Use this context to guide your responses.
-        """.strip()
-    
+    Therion aims to make vaccine design more accessible, accurate, and efficient through centralisation, consensus prediction, and AI-powered interpretation. It integrates various immunoinformatics tools into one intuitive workflow and provides real-time assistance at each step.
+
+    The typical pipeline includes:
+    1. **Sequence Retrieval** – from viral databases.
+    2. **Epitope Prediction** – identifying CTL epitopes likely to bind MHC-I.
+    3. **Conservancy Analysis** – selecting epitopes conserved across viral strains.
+    4. **Antigenicity, Allergenicity, Toxicity Screening** – ensuring safety and immunogenicity.
+    5. **Cytokine Profiling** – predicting immune response activation.
+    6. **Population Coverage** – assessing HLA allele coverage.
+    7. **Vaccine Construct Design** – multi-epitope construction and 3D structure modelling.
+    8. **Docking & Simulation** – binding affinity and biological stability checks.
+    9. **Codon Optimisation & In-Silico Cloning** – preparing for lab expression.
+
+    Therion focuses on the first six computational steps of this vaccine design pipeline.
+
+    Guide the user based on these steps and the inputs above. Provide clear, biologically relevant explanations and assist both technical and non-technical users in interpreting results and selecting next actions.
+    """.strip()
+
     api_messages.append({
         "role": "system",
         "content": system_context
     })
-
 
     for m in messages:
         # Map your internal "ai" to "assistant" for the API

@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 import os
 from datetime import datetime
@@ -10,9 +11,35 @@ def CImmSim(protein_sequence: str):
     Automates the C-ImmSim web server to submit a protein sequence for simulation.
     Returns the output link and image of the simulation results.
     """
+
+    options = Options()
+    options.add_argument("--headless=new")
+    options.add_argument("--window-size=1920,1080")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument(
+        "--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    )
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
+
+    driver = webdriver.Chrome(options=options)
+
+    # Remove navigator.webdriver to help avoid detection
+    driver.execute_cdp_cmd(
+        "Page.addScriptToEvaluateOnNewDocument",
+        {
+            "source": """
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined
+                })
+            """
+        },
+    )
     
     # 1️⃣ Setup Selenium browser (Chrome)
-    driver = webdriver.Chrome()  # Make sure chromedriver is installed & in PATH\
+    # driver = webdriver.Chrome()  # Make sure chromedriver is installed & in PATH\
     # This will always point to the folder where main.py lives
     PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))  # This is step6_cytokine_analysis/
     STATIC_DIR = os.path.join(PROJECT_ROOT, "..", "static")    # This goes up one level to project_root/static/

@@ -49,7 +49,7 @@ export default function ResultsCompleteTable({ data }: { data: ResultCompleteEnt
                 {item.allele}
               </TableCell>
               <TableCell>
-                <Badge className={item.antigen ? "text-red-500" : "text-black"} variant={"outline"}>
+                <Badge className={item.antigen ? "text-black" : "text-red-500"} variant={"outline"}>
                   {item.antigen ? "Non-Antigen" : "Antigen"}
                 </Badge>  
               </TableCell>

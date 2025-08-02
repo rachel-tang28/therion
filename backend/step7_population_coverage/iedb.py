@@ -2,9 +2,10 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
+from typing import List
 
-
-def get_population_coverage(epitope_list: list[str], hla_alleles: list[str]):
+def get_population_coverage(epitope_and_alleles: List[dict]):
 
     # ✅ Your epitope list
     # epitope_list = [
@@ -21,7 +22,31 @@ def get_population_coverage(epitope_list: list[str], hla_alleles: list[str]):
     # ]
 
     # 1️⃣ Setup Selenium
-    driver = webdriver.Chrome()
+    options = Options()
+    options.add_argument("--headless=new")
+    options.add_argument("--window-size=1920,1080")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument(
+        "--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    )
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
+
+    driver = webdriver.Chrome(options=options)
+
+    # Remove navigator.webdriver to help avoid detection
+    driver.execute_cdp_cmd(
+        "Page.addScriptToEvaluateOnNewDocument",
+        {
+            "source": """
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined
+                })
+            """
+        },
+    )
 
     try:
         # 2️⃣ Open Population Coverage tool
@@ -84,11 +109,16 @@ def get_population_coverage(epitope_list: list[str], hla_alleles: list[str]):
 
 
         # Make sure you have enough input fields
-        if len(peptide_inputs) < len(epitope_list):
-            raise ValueError(f"Expected at least {len(epitope_list)} input boxes, found {len(peptide_inputs)}")
+        if len(peptide_inputs) < len(epitope_and_alleles):
+            raise ValueError(f"Expected at least {len(epitope_and_alleles['sequence'])} input boxes, found {len(peptide_inputs)}")
 
-
-        for idx, epitope in enumerate(epitope_list, start=1):
+        # hla_alleles = [{seq: str, alleles: List[str]}]
+        print("EPITOPE AND ALLELES:", epitope_and_alleles)
+        for entry in epitope_and_alleles:
+            epitope = entry['sequence']
+            hla_alleles = entry['alleles']
+            idx = epitope_and_alleles.index(entry) + 1
+            print(f"Entering epitope {idx}: {epitope} with alleles: {hla_alleles}")
             peptide_cell = driver.find_element(By.XPATH, f"(//table[contains(@class,'popcov')]//td[1]/input[@type='text' and @name='epitope'])[{idx}]")
             hla_cell = driver.find_element(By.XPATH, f"(//table[contains(@class, 'popcov')]//td[2]/input[@type='text' and @name='allele'])[{idx}]")
 

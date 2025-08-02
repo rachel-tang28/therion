@@ -129,11 +129,22 @@ def run_method(sequence: str, alleles: str, method_name: str):
         for row in top_peptides
     ]
 
+    # Find all instances of each top peptide in the table_data, and get corresponding allele
+    hla_alleles = []
+    for p in result:
+        sequence = p["sequence"]
+        alleles = [row[allele] for row in data_rows if row[peptide_idx] == p["sequence"]]
+        print(f"Peptide: {p['sequence']}, Score: {p['score']}, Alleles: {alleles}")
+        hla_alleles.append({
+            "sequence": p["sequence"],
+            "alleles": alleles
+        })
+
     print(f"Top 10 peptides for {method_name}:")
     for p in result:
         print(p)
 
-    return result
+    return result, hla_alleles
 
 
 def IEDB_epitope_prediction(sequence: str, alleles: str, methods: list):
@@ -141,20 +152,32 @@ def IEDB_epitope_prediction(sequence: str, alleles: str, methods: list):
     Runs all selected methods and combines the results into a consensus.
     """
     combined = {}
-
+    allele_by_sequence = {}
+    
     for method in methods:
         print(f"Running method: {method}")
-        results = run_method(sequence, alleles, method)
+        results, hla_alleles = run_method(sequence, alleles, method)
+        print(f"Results for {method}: {results}")
         for rank, entry in enumerate(results):
             seq = entry["sequence"]
             score = entry["score"]
             allele = entry["allele"]
             weight = len(results) - rank
+
+            # Add weighted score
             combined.setdefault(seq, 0)
             combined[seq] += score * weight
 
+            # Store allele the first time this seq is seen
+            if seq not in allele_by_sequence:
+                allele_by_sequence[seq] = allele
+    
     consensus = [
-        {"sequence": seq, "weighted_score": combined_score, "allele": allele}
+        {
+            "sequence": seq,
+            "weighted_score": combined_score,
+            "allele": allele_by_sequence[seq]  # correct allele
+        }
         for seq, combined_score in combined.items()
     ]
     consensus.sort(key=lambda x: x["weighted_score"], reverse=True)
@@ -163,4 +186,4 @@ def IEDB_epitope_prediction(sequence: str, alleles: str, methods: list):
     for p in consensus[:10]:
         print(p)
 
-    return consensus
+    return consensus, hla_alleles
