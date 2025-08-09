@@ -5,9 +5,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.ui import Select
 
 
-def AlgPred2(peptide_list: list[str]):
+
+def AlgPred2(peptide_list: list[str], threshold_value: float):
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--window-size=1920,1080")
@@ -43,6 +45,11 @@ def AlgPred2(peptide_list: list[str]):
         # from selenium.webdriver.support.ui import Select
         # method_dropdown = Select(driver.find_element(By.NAME, "method"))
         # method_dropdown.select_by_visible_text("SVM + Motif")  # or whichever method you want
+        # Threshold input if needed
+        threshold_dropdown = Select(driver.find_element(By.NAME, "svm_th"))
+        threshold_dropdown.select_by_value(str(threshold_value))
+        print(f"Selected threshold: {threshold_value}")
+
 
         # Click the submit button (input type submit)
         submit_button = driver.find_element(By.XPATH, '//input[@type="submit" and @value="Submit"]')
@@ -54,6 +61,17 @@ def AlgPred2(peptide_list: list[str]):
         )
 
         result_table = driver.find_element(By.XPATH, "//table").text
+        # Result table has 'seq' followed by a number, score, and allergen status
+        # E.g. ['seq1', '0.27', 'Non-Allergen']
+        # ['seq2', '0.38', 'Allergen']
+        # ['seq3', '0.37', 'Allergen']
+        # ['seq4', '0.33', 'Allergen']
+        # ['seq5', '0.38', 'Allergen']
+        # ['seq6', '0.35', 'Allergen']
+        # ['seq7', '0.34', 'Allergen']
+        # ['seq8', '0.3', 'Non-Allergen']
+        # ['seq9', '0.3', 'Non-Allergen']
+        # ['seq10', '0.4', 'Allergen']
         print("\nAlgPred2 Batch Results:\n", result_table)
 
         results = []
@@ -67,8 +85,10 @@ def AlgPred2(peptide_list: list[str]):
                 print(cell_texts)
                 seq_num = int(cell_texts[0].replace("seq", "")) - 1
                 sequence = peptide_list[seq_num]
+                score = float(cell_texts[1])
                 results.append({
                     "sequence": sequence,
+                    "score": score,
                     "allergen": cell_texts[2] == "Allergen"
                 })
         print("\nParsed Results: ", results)

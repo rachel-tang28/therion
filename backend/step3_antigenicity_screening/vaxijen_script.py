@@ -14,7 +14,7 @@ from requests_html import HTMLSession
 from requests.exceptions import ReadTimeout
 
 
-def Vaxijen_fnc(protein_seq,target='bacteria',threshold=0.4):
+def Vaxijen_fnc(protein_seq, threshold, target='virus'):
     success=False
     #Vaxijen URLs
     url='http://www.ddg-pharmfac.net/vaxijen/VaxiJen/VaxiJen.html'
@@ -54,13 +54,13 @@ def Vaxijen_fnc(protein_seq,target='bacteria',threshold=0.4):
     return a
 
 
-def Vaxijen(df,target,threshold):
+def Vaxijen(df, threshold, target='virus'):
     seqs=df['Sequences']
     pred_score=[]
     antigen=[]
     for k in seqs:
         print(f"Processing sequence: {k}")
-        temp=Vaxijen_fnc(k,target,threshold)
+        temp=Vaxijen_fnc(k,threshold,target)
         pred_score.append(temp['prediction_score'])
         antigen.append(bool(temp['ANTIGEN']))
         time.sleep(0.01)

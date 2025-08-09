@@ -27,3 +27,9 @@
     </AccordionContent>
   </AccordionItem>
 </Accordion>
+
+<div className="w-full max-w-4xl">
+    <ScreeningTable data={antigenicityScreening} />
+</div>
+
+const FLIPCOLORS = ["#df5959ff", "#63c184ff"];

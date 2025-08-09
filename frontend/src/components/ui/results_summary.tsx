@@ -30,7 +30,7 @@ export default function ResultsCompleteTable({ data }: { data: ResultCompleteEnt
           <TableRow>
             <TableHead>Sequence</TableHead>
             <TableHead>Binding Score</TableHead>
-            <TableHead>HLA Alleles</TableHead>
+            <TableHead>HLA Allele</TableHead>
             <TableHead>Antigenicity</TableHead>
             <TableHead>Allergencity</TableHead>
             <TableHead>Toxicity</TableHead>
@@ -42,24 +42,24 @@ export default function ResultsCompleteTable({ data }: { data: ResultCompleteEnt
             <TableRow key={index}>
               <TableCell>{item.sequence}</TableCell>
               <TableCell className="flex items-center flex-row gap-[8px]">
-                <h3>{item.binding_score}</h3>
+                <h3>{(item.binding_score / 10).toFixed(2)}</h3>
                 <Progress value={item.binding_score} />
               </TableCell>
               <TableCell>
                 {item.allele}
               </TableCell>
               <TableCell>
-                <Badge className={item.antigen ? "text-black" : "text-red-500"} variant={"outline"}>
-                  {item.antigen ? "Non-Antigen" : "Antigen"}
+                <Badge className={item.antigen ? "text-green-600" : "text-red-500"} variant={"outline"}>
+                  {item.antigen ? "Antigen" : "Non-Antigen"}
                 </Badge>  
               </TableCell>
               <TableCell>
-                <Badge className={item.allergen ? "text-red-500" : "text-black"} variant={"outline"}>
+                <Badge className={item.allergen ? "text-red-500" : "text-green-600"} variant={"outline"}>
                   {item.allergen ? "Allergen" : "Non-Allergen"}
                 </Badge>
               </TableCell>
               <TableCell>
-                <Badge className={item.toxin ? "text-red-500" : "text-black"} variant={"outline"}>
+                <Badge className={item.toxin ? "text-red-500" : "text-green-600"} variant={"outline"}>
                   {item.toxin ? "Toxin" : "Non-Toxin"}
                 </Badge>
               </TableCell>

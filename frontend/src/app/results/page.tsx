@@ -14,9 +14,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ResultsTable from "@/components/ui/results_table";
 import ResultsCompleteTable from "@/components/ui/results_summary";
 import RoundIcon from "@/components/ui/round_icon";
-import { Loader2, Zap } from "lucide-react";
+import { Loader2, Terminal, Zap, CheckCircle2Icon } from "lucide-react";
 import Image from "next/image";
 import { Chat } from "@/components/ui/chat";
+import AntigenicityTable from "@/components/ui/antigenicity_table";
+import AllergenicityTable from "@/components/ui/allergenicity_table";
+import ToxicityTable from "@/components/ui/toxicity_table";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface ResultEntry {
   sequence: string;
@@ -42,20 +46,24 @@ interface ConservancyResult {
 
 interface AntigenicityResult {
   sequence: string;
+  score: number;
   antigen: boolean;
 }
 
 interface AllergenicityResult {
   sequence: string;
+  score: number;
   allergen: boolean;
 }
 
 interface ToxicityResult {
   sequence: string;
+  score: number;
   toxin: boolean;
 }
 
-const COLORS = ["#0088FE", "#FF8042"];
+const COLORS = ["#63c184ff", "#df5959ff"];
+const FLIPCOLORS = ["#df5959ff", "#63c184ff"];
 
 const RADIAN = Math.PI / 180;
 const renderCustomizedLabel = ({
@@ -87,6 +95,7 @@ const renderCustomizedLabel = ({
 };
 
 export default function ResultsPage() {
+  const [pipelineName, setPipelineName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [predictedPeptides, setPredictedPeptides] = useState<ResultEntry[]>([]);
   const [conservancyAnalysis, setConservancyAnalysis] = useState<
@@ -106,6 +115,7 @@ export default function ResultsPage() {
   const [progress, setProgress] = useState(1);
   const [currentMessage, setCurrentMessage] = useState(1);
   const [results, setResults] = useState<ResultCompleteEntry[]>([]);
+  const [selections, setSelections] = useState<string>("");
 
   const messages = [
     "Processing sequence data...",
@@ -207,6 +217,7 @@ export default function ResultsPage() {
               setAntigenicityScreening(
                 antigenArray.map((item) => ({
                   sequence: item.Sequences,
+                  score: item.Prediction_Score,
                   antigen: !!item.Antigen, // ensures boolean
                 }))
               );
@@ -243,6 +254,7 @@ export default function ResultsPage() {
               setAllergenicityScreening(
                 allergenArray.map((item) => ({
                   sequence: item.sequence,
+                  score: item.score,
                   allergen: !!item.allergen, // already boolean
                 }))
               );
@@ -284,6 +296,7 @@ export default function ResultsPage() {
             setToxicityScreening(
               toxicityArray.map((item) => ({
                 sequence: item.sequence,
+                score: item.score,
                 toxin: item.prediction === "Toxin",
               }))
             );
@@ -326,6 +339,32 @@ export default function ResultsPage() {
 
   useEffect(() => {
     async function runPipeline() {
+      try {
+        const response = await fetch(
+          process.env.NEXT_PUBLIC_API_ENDPOINT + "pipeline_name/"
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch pipeline name");
+        }
+        const data = await response.json();
+        setPipelineName(data.pipeline_name);
+      } catch (error) {
+        console.error("Error fetching pipeline name:", error);
+      }
+
+      try {
+        const response = await fetch(
+          process.env.NEXT_PUBLIC_API_ENDPOINT + "get_selections/"
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch selections");
+        }
+        const data = await response.json();
+        setSelections(data.selections);
+      } catch (error) {
+        console.error("Error fetching selections:", error);
+      }
+
       if (predictedPeptides.length > 0) {
         console.log("Peptides already extracted, skipping epitope prediction.");
         setLoading(false);
@@ -645,7 +684,7 @@ export default function ResultsPage() {
             </div>
 
             <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-200">
-              Generating Your Results
+              Generating Results for {pipelineName}
             </h1>
           </div>
 
@@ -713,8 +752,8 @@ export default function ResultsPage() {
       <main className="pr-[55px] mt-[18px] gap-[18px] w-full max-h-3/5 overflow-scroll flex flex-col w-full gap-[16px] normal-box items-center justify-center">
         <div className="flex flex-col h-full">
           <h1 className="main-heading-1">Pipeline Results</h1>
-          <p className="mb-8">
-            This is the results page where you can view the analysis results.
+          <p className="mb-8 mt-3">
+            Generated for <span className="font-semibold">{pipelineName}</span>
           </p>
           <Tabs defaultValue="summary" className="w-full">
             <TabsList className="w-full h-[80px] flex items-center justify-between bg-muted p-[8px] text-muted-foreground gap-[12px]">
@@ -770,7 +809,7 @@ export default function ResultsPage() {
             <TabsContent value="summary">
               <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
                 <h2 className="text-lg font-semibold mb-4">
-                  T-cell Epitope Prediction Results
+                  Results Summary
                 </h2>
                 <div className="w-full max-w-4xl">
                   <ResultsCompleteTable data={results} />
@@ -778,9 +817,15 @@ export default function ResultsPage() {
               </div>
             </TabsContent>
             <TabsContent value="step2">
-              <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
+              <div className="flex flex-col items-center justify-center w-full h-full">
+                <div className="w-full flex justify-start p-[8px] mb-[2px]">
+                  <Alert variant="default" className="flex items-center">
+                    <Terminal className="h-4 w-4 align-middle" />
+                    <AlertTitle className="ml-0">Computed using: <span className="italic">{selections}</span></AlertTitle>
+                  </Alert>
+                </div>
                 <h2 className="text-lg font-semibold mb-4">
-                  T-cell Epitope Prediction Results
+                  T-Cell Epitope Prediction Results
                 </h2>
                 <div className="w-full max-w-4xl">
                   <ResultsTable data={predictedPeptides} />
@@ -788,10 +833,19 @@ export default function ResultsPage() {
               </div>
             </TabsContent>
             <TabsContent value="step3">
-              <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
+              <div className="flex flex-col items-center justify-center w-full h-full">
+                <div className="w-full flex justify-start p-[8px] mb-[2px]">
+                  <Alert variant="default" className="flex items-center">
+                    <Terminal className="h-4 w-4 align-middle" />
+                    <AlertTitle className="ml-0">Computed using: <span className="italic">IEDB</span></AlertTitle>
+                  </Alert>
+                </div>
+                <h2 className="text-lg font-semibold mb-4">
+                  Conservancy Analysis Results
+                </h2>
                 <div className="w-full overflow-x-auto">
                   <BarChart
-                    width={Math.max(800, conservancyAnalysis.length * 80)}
+                    width={Math.max(1500, conservancyAnalysis.length * 80)}
                     height={250}
                     data={conservancyAnalysis}
                   >
@@ -807,6 +861,15 @@ export default function ResultsPage() {
             </TabsContent>
             <TabsContent value="step4">
               <div className="flex flex-col items-center justify-center w-full h-full">
+                <div className="w-full flex justify-start p-[8px] mb-[2px]">
+                  <Alert variant="default" className="flex items-center">
+                    <Terminal className="h-4 w-4 align-middle" />
+                    <AlertTitle className="ml-0">Computed using: <span className="italic">VaxiJen</span></AlertTitle>
+                  </Alert>
+                </div>
+                <h2 className="text-lg font-semibold mb-4">
+                  Antigenicity Screening Results
+                </h2>
                 <PieChart width={400} height={400}>
                   <Pie
                     data={antigenicityPieData}
@@ -832,11 +895,23 @@ export default function ResultsPage() {
                     align="right"
                   />
                 </PieChart>
+                <div className="w-full max-w-4xl">
+                    <AntigenicityTable data={antigenicityScreening} />
+                </div>
               </div>
             </TabsContent>
 
             <TabsContent value="step5">
               <div className="flex flex-col items-center justify-center w-full h-full">
+                <div className="w-full flex justify-start p-[8px] mb-[2px]">
+                  <Alert variant="default" className="flex items-center">
+                    <Terminal className="h-4 w-4 align-middle" />
+                    <AlertTitle className="ml-0">Computed using: <span className="italic">AlgPred2</span></AlertTitle>
+                  </Alert>
+                </div>
+                <h2 className="text-lg font-semibold mb-4">
+                  Allergenicity Screening Results
+                </h2>
                 <PieChart width={400} height={400}>
                   <Pie
                     data={allergenicityPieData}
@@ -851,7 +926,7 @@ export default function ResultsPage() {
                     {allergenicityPieData.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
+                        fill={FLIPCOLORS[index % FLIPCOLORS.length]}
                       />
                     ))}
                   </Pie>
@@ -862,11 +937,23 @@ export default function ResultsPage() {
                     align="right"
                   />
                 </PieChart>
+                <div className="w-full max-w-4xl">
+                    <AllergenicityTable data={allergenicityScreening} />
+                </div>
               </div>
             </TabsContent>
 
             <TabsContent value="step6">
               <div className="flex flex-col items-center justify-center w-full h-full">
+                <div className="w-full flex justify-start p-[8px] mb-[2px]">
+                  <Alert variant="default" className="flex items-center">
+                    <Terminal className="h-4 w-4 align-middle" />
+                    <AlertTitle className="ml-0">Computed using: <span className="italic">ToxinPred</span></AlertTitle>
+                  </Alert>
+                </div>
+                <h2 className="text-lg font-semibold mb-4">
+                  Toxicity Screening Results
+                </h2>
                 <PieChart width={400} height={400}>
                   <Pie
                     data={toxicityPieData}
@@ -881,7 +968,7 @@ export default function ResultsPage() {
                     {toxicityPieData.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
+                        fill={FLIPCOLORS[index % FLIPCOLORS.length]}
                       />
                     ))}
                   </Pie>
@@ -892,10 +979,19 @@ export default function ResultsPage() {
                     align="right"
                   />
                 </PieChart>
+                <div className="w-full max-w-4xl">
+                    <ToxicityTable data={toxicityScreening} />
+                </div>
               </div>
             </TabsContent>
             <TabsContent value="step7">
-              <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
+              <div className="flex flex-col items-center justify-center w-full h-full">
+                <div className="w-full flex justify-start p-[8px] mb-[2px]">
+                  <Alert variant="default" className="flex items-center">
+                    <Terminal className="h-4 w-4 align-middle" />
+                    <AlertTitle className="ml-0">Computed using: <span className="italic">C-Imm-Sim</span></AlertTitle>
+                  </Alert>
+                </div>
                 <h2 className="text-lg font-semibold mb-4">
                   Cytokine Analysis Results
                 </h2>
@@ -908,7 +1004,15 @@ export default function ResultsPage() {
               </div>
             </TabsContent>
             <TabsContent value="step8">
-              <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
+              <div className="flex flex-col items-center justify-center w-full h-full">
+                <div className="w-full flex justify-start p-[8px] mb-[2px]">
+                  <Alert variant="default" className="flex items-center">
+                    <Terminal className="h-4 w-4 align-middle" />
+                    <AlertTitle className="ml-0">
+                      Computed using: <span className="italic">IEDB</span>
+                    </AlertTitle>
+                  </Alert>
+                </div>
                 <h2 className="text-lg font-semibold mb-4">
                   Population Coverage Results
                 </h2>

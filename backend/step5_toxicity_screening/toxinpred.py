@@ -58,6 +58,7 @@ def ToxinPred(peptide_list: list[str]):
                 if len(cell_texts) >= 3:
                     results.append( {
                         "sequence": cell_texts[1],
+                        "score": float(cell_texts[2]),
                         "prediction": cell_texts[3]
                     })
         return {"results": results}

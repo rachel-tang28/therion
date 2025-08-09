@@ -35,7 +35,7 @@ export default function ResultsTable({ data }: { data: ResultEntry[] }) {
               <TableCell>{item.sequence}</TableCell>
               <TableCell>{item.allele}</TableCell>
               <TableCell className="flex items-center flex-row gap-[8px]">
-                <h3>{item.binding_score}</h3>
+                <h3>{(item.binding_score / 10).toFixed(2)}</h3>
                 <Progress value={item.binding_score} />
               </TableCell>
               <TableCell>
