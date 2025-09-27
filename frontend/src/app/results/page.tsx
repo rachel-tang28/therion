@@ -130,6 +130,9 @@ export default function ResultsPage() {
     "Results ready!"
   ];
 
+  const [antigenicityThreshold, setAntigenicityThreshold] = useState<number>(0.4);
+  const [allergenicityThreshold, setAllergenicityThreshold] = useState<number>(0.3);
+
   // // Simulate progress updates
   // useEffect(() => {
   //     const interval = setInterval(() => {
@@ -213,6 +216,22 @@ export default function ResultsPage() {
           if (endpoint.name === "Vaxijen") {
             const antigenArray = Array.isArray(data) ? data : data.results;
 
+            fetch(process.env.NEXT_PUBLIC_API_ENDPOINT + "get_threshold/", {
+              headers: {
+                "Content-Type": "application/json",
+              }
+            })
+              .then((response) => {
+                if (!response.ok) {
+                  throw new Error("Failed to fetch antigenicity threshold");
+                }
+                return response.json();
+              })
+              .then((data) => {
+                setAntigenicityThreshold(data.threshold);
+                console.log("Antigenicity threshold:", data.threshold);
+              });
+
             if (Array.isArray(antigenArray)) {
               setAntigenicityScreening(
                 antigenArray.map((item) => ({
@@ -250,6 +269,23 @@ export default function ResultsPage() {
             );
           } else if (endpoint.name === "AlgPred2") {
             const allergenArray = Array.isArray(data) ? data : data.results;
+
+            fetch(process.env.NEXT_PUBLIC_API_ENDPOINT + "get_allergenicity_threshold/", {
+              headers: {
+                "Content-Type": "application/json",
+              }
+            })
+              .then((response) => {
+                if (!response.ok) {
+                  throw new Error("Failed to fetch allergenicity threshold");
+                }
+                return response.json();
+              })
+              .then((data) => {
+                setAllergenicityThreshold(data.threshold);
+                console.log("Allergenicity threshold:", data.threshold);
+              });
+
             if (Array.isArray(allergenArray)) {
               setAllergenicityScreening(
                 allergenArray.map((item) => ({
@@ -732,7 +768,7 @@ export default function ResultsPage() {
             </div>
             <div className="flex items-center space-x-2 text-slate-500 dark:text-slate-400">
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Analyzing Data</span>
+              <span className="text-sm">Analysing Data</span>
             </div>
           </div>
 
@@ -870,7 +906,10 @@ export default function ResultsPage() {
                 <h2 className="text-lg font-semibold mb-4">
                   Antigenicity Screening Results
                 </h2>
-                <PieChart width={400} height={400}>
+                <h3 className="text-md">
+                  Antigenicity Threshold: <span className="italic">{antigenicityThreshold}</span>
+                </h3>
+                <PieChart width={400} height={200}>
                   <Pie
                     data={antigenicityPieData}
                     cx="50%"
@@ -912,6 +951,9 @@ export default function ResultsPage() {
                 <h2 className="text-lg font-semibold mb-4">
                   Allergenicity Screening Results
                 </h2>
+                <h3 className="text-md">
+                  Allergenicity Threshold: <span className="italic">{allergenicityThreshold}</span>
+                </h3>
                 <PieChart width={400} height={400}>
                   <Pie
                     data={allergenicityPieData}

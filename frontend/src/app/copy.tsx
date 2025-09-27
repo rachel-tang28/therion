@@ -31,8 +31,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { BotMessageSquare, Check } from "lucide-react"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 
 export default function Pipeline() {
@@ -65,15 +63,6 @@ export default function Pipeline() {
         7: true,
         8: true,
     });
-     // accordion open/collapse states
-    const [isOpen1, setIsOpen1] = useState(false);
-    const [isOpen2, setIsOpen2] = useState(false);
-    const [isOpen3, setIsOpen3] = useState(false);
-    const [isOpen4, setIsOpen4] = useState(false);
-    const [isOpen5, setIsOpen5] = useState(false);
-    const [isOpen6, setIsOpen6] = useState(false);
-    const [isOpen7, setIsOpen7] = useState(false);
-    const [isOpen8, setIsOpen8] = useState(false);
 
     const toggleStep = (step: number) => {
         setActiveSteps(prev => ({ ...prev, [step]: !prev[step] }));
@@ -501,166 +490,73 @@ export default function Pipeline() {
                     {advancedMode && <Badge variant="red">Enabled</Badge>}
                 </div>
             </div>
-            <div className="flex flex-row justify-between">
-                <h1>Pipeline Workflow</h1>
-                
-                <RadioGroup defaultValue="select-all" className="flex flex-row items-center space-x-4 pr-[8px]">
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                    value="select-all"
-                    id="select-all"
-                    onClick={() => {
-                        setActiveSteps({
-                        1: true,
-                        2: true,
-                        3: true,
-                        4: true,
-                        5: true,
-                        6: true,
-                        7: true,
-                        8: true,
-                        });
-                    }}
-                    />
-                    <Label htmlFor="select-all">Select All</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                    value="deselect-all"
-                    id="deselect-all"
-                    onClick={() => {
-                        setActiveSteps({
-                        1: false,
-                        2: false,
-                        3: false,
-                        4: false,
-                        5: false,
-                        6: false,
-                        7: false,
-                        8: false,
-                        });
-                    }}
-                    />
-                    <Label htmlFor="deselect-all">Deselect All</Label>
-                </div>
-                </RadioGroup>
-            </div>
-            
-            <Accordion
-            type="single"
-            value={isOpen1 ? "item-1" : "item-0"}
-            collapsible
-            >
-            <AccordionItem value="item-1">
-                <div className={`accordion-wrapper ${!activeSteps[1] ? "opacity-50" : ""}`}>
-                <AccordionTrigger
-                    className="first-box-accordion"
-                    onClick={(e) => {
-                    // Only allow user to toggle accordion if step is active
-                    if (!activeSteps[1]) {
-                        e.preventDefault();
-                    } else {
-                        setIsOpen1((prev) => !prev); // toggle accordion freely when active
-                    }
-                    }}
-                >
-                    <div className="relative inline-block">
-                    <RoundIcon imageSrc="/file_emoji.svg" />
-                    <div
-                        className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] check-toggle
-                        ${activeSteps[1] ? "bg-blue-600 border-gray-400 text-white" : "bg-white border-gray-400 text-transparent"}`}
-                        onClick={(e) => {
-                        e.stopPropagation(); // prevent accordion toggle
-                        toggleStep(1); // toggle step active state
-
-                        // Automatically collapse accordion if step becomes inactive
-                        if (activeSteps[1]) {
-                            setIsOpen1(false);
-                        } else {
-                            setIsOpen1(true); // optionally expand when activating
-                        }
-                        }}
-                    >
-                        <Check className="w-3 h-3" />
-                    </div>
-                    </div>
-
-                    <div className="flex flex-col gap-[8px] w-full">
-                    <div className="flex flex-row items-center gap-[12px] w-full">
-                        <Badge variant="step_badge">Step 1</Badge>
-                        <h1 className={error ? "text-red-600" : ""}>Upload Sequence</h1>
-                        <Badge variant="required_badge">Required</Badge>
-                        {error && (
-                        <Image
-                            src="/exclamation_emoji.svg"
-                            alt="Error Icon"
-                            width={16}
-                            height={16}
-                            className="flashing-error"
-                        />
-                        )}
-                    </div>
-                    <h1 className={error ? "description-text-error" : "description-text"}>
-                        Upload sequence file or paste sequence
-                    </h1>
-                    </div>
-                </AccordionTrigger>
-
-                <AccordionContent>
-                    <div className="flex flex-col gap-[0px] first-box">
-                    <div className="flex flex-col gap-[4px] w-full h-[100px]">
-                        <FileUpload setFile={handleFileUpload} />
-                    </div>
-                    <div className="flex flex-col w-full justify-center items-center justify-between">
-                        <h2 className="description-text">or</h2>
-                    </div>
-                    <h1 className="input-box-header">Paste Sequence</h1>
-                    <div className="flex flex-col gap-[4px] w-full">
-                        <Textarea
-                        className="input-text w-full min-h-[100px] items-start text-start align-top"
-                        placeholder="Paste your sequence here..."
-                        disabled={fileUpload}
-                        onChange={(e) => {
-                            setSequence(e.target.value);
-                            setError(false);
-                        }}
-                        />
-                    </div>
-                    </div>
-                </AccordionContent>
-                </div>
-            </AccordionItem>
-            </Accordion>
-            <Accordion type="single" value={isOpen2 ? "item-1" : "item-0"} collapsible>
+            <h1>Pipeline Workflow</h1>
+            <Accordion type="single" collapsible>
                 <AccordionItem value="item-1">
-                    <div className={`accordion-wrapper ${!activeSteps[2] ? "opacity-50" : ""}`}>
+                    <div className={`accordion-wrapper ${!activeSteps[1] ? "opacity-50" : ""}`}>
                     <AccordionTrigger className="first-box-accordion" 
                         onClick={(e) => {
-                            if (!activeSteps[2]) {
+                            if (!activeSteps[1]) {
                                 e.preventDefault(); // this blocks the expansion when the step is not selected
-                            } else {
-                                setIsOpen2((prev) => !prev); // toggle accordion freely when active
                             }
                         }}>
                         <div className="relative inline-block">
-                            <RoundIcon imageSrc="/dna_emoji.svg" />
+                            <RoundIcon imageSrc="/file_emoji.svg" />
                             <div
-                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] border-gray-400 check-toggle
-                                ${activeSteps[2] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
+                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-2
+                                ${activeSteps[1] ? "bg-blue-600 border-blue-600 text-white" : "bg-white border-gray-400 text-transparent"}`}
                                 onClick={(e) => {
                                 e.stopPropagation();
-                                toggleStep(2);
-                                if (activeSteps[2]) {
-                                    setIsOpen2(false);
-                                } else {
-                                    setIsOpen2(true); // optionally expand when activating
-                                }
+                                toggleStep(1);
                                 }}
                             >
                                 <Check className="w-3 h-3" />
                             </div>
                         </div>
+                        
+                        <div className="flex flex-col gap-[8px] w-full">
+                            <div className="flex flex-row items-center gap-[12px] w-full">
+                                <Badge variant="step_badge">Step 1</Badge>
+                                <h1 className={error ? "text-red-600" : ""}>Upload Sequence</h1>
+                                <Badge variant="required_badge">Required</Badge>
+                                {error && (
+                                    <Image src="/exclamation_emoji.svg" alt="Error Icon" width={16} height={16} className="flashing-error" />
+                                )}
+                            </div>
+                            <h1 className={error ? "description-text-error" : "description-text"}>Upload sequence file or paste sequence</h1>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-col gap-[0px] first-box">
+                            <div className="flex flex-col gap-[4px] w-full h-[100px]">
+                                <FileUpload setFile={handleFileUpload} />
+                            </div>
+                            <div className="flex flex-col w-full justify-center items-center justify-between">
+                                <h2 className="description-text">or</h2>
+                            </div>
+                            <h1 className="input-box-header">Paste Sequence</h1>
+                            <div className="flex flex-col gap-[4px] w-full">
+                                <Textarea
+                                    className="input-text w-full min-h-[100px] items-start text-start align-top"
+                                    placeholder="Paste your sequence here..."
+                                    disabled={fileUpload}
+                                    onChange={e => {
+                                        setSequence(e.target.value);
+                                        setError(false);
+                                    }}
+                                ></Textarea>
+                            </div>
+                        </div>
+                    </AccordionContent>
+                    </div>
+                    
+                </AccordionItem>
+            </Accordion>
+            <Accordion type="single" collapsible>
+                <AccordionItem value="item-1">
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <RoundIcon imageSrc="/dna_emoji.svg"></RoundIcon>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 2</Badge>
@@ -708,36 +604,11 @@ export default function Pipeline() {
                     
                 </AccordionItem>
             </Accordion>
-            <Accordion type="single" value={isOpen3 ? "item-1" : "item-0"} collapsible>
+            <Accordion type="single" collapsible>
                 <AccordionItem value="item-1">
-                    <div className={`accordion-wrapper ${!activeSteps[3] ? "opacity-50" : ""}`}>
-                    <AccordionTrigger className="first-box-accordion" 
-                        onClick={(e) => {
-                            if (!activeSteps[3]) {
-                                e.preventDefault(); // this blocks the expansion when the step is not selected
-                            } else {
-                                setIsOpen3((prev) => !prev); // toggle accordion freely when active
-                            }
-                        }}>
-                        <div className="relative inline-block">
-                            <RoundIcon imageSrc="/tree_emoji.svg" />
-                            <div
-                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] border-gray-400 check-toggle
-                                ${activeSteps[3] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
-                                onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStep(3);
-                                // Automatically collapse accordion if step becomes inactive
-                                if (activeSteps[3]) {
-                                    setIsOpen3(false);
-                                } else {
-                                    setIsOpen3(true); // optionally expand when activating
-                                }
-                                }}
-                            >
-                                <Check className="w-3 h-3" />
-                            </div>
-                        </div>
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <RoundIcon imageSrc="/tree_emoji.svg"></RoundIcon>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 3</Badge>
@@ -804,35 +675,11 @@ export default function Pipeline() {
                     
                 </AccordionItem>
             </Accordion>
-            <Accordion type="single" value={isOpen4 ? "item-1" : "item-0"} collapsible>
+            <Accordion type="single" collapsible>
                 <AccordionItem value="item-1">
-                    <div className={`accordion-wrapper ${!activeSteps[4] ? "opacity-50" : ""}`}>
-                    <AccordionTrigger className="first-box-accordion" 
-                        onClick={(e) => {
-                            if (!activeSteps[4]) {
-                                e.preventDefault(); // this blocks the expansion when the step is not selected
-                            } else {
-                                setIsOpen4((prev) => !prev); // toggle accordion freely when active
-                            }
-                        }}>
-                        <div className="relative inline-block">
-                            <RoundIcon imageSrc="/shield_emoji.svg" />
-                            <div
-                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] border-gray-400 check-toggle
-                                ${activeSteps[4] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
-                                onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStep(4);
-                                if (activeSteps[4]) {
-                                    setIsOpen4(false);
-                                } else {
-                                    setIsOpen4(true); // optionally expand when activating
-                                }
-                                }}
-                            >
-                                <Check className="w-3 h-3" />
-                            </div>
-                        </div>
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <RoundIcon imageSrc="/shield_emoji.svg"></RoundIcon>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 4</Badge>
@@ -901,35 +748,11 @@ export default function Pipeline() {
                     
                 </AccordionItem>
             </Accordion>
-            <Accordion type="single" value={isOpen5 ? "item-1" : "item-0"} collapsible>
+            <Accordion type="single" collapsible>
                 <AccordionItem value="item-1">
-                    <div className={`accordion-wrapper ${!activeSteps[5] ? "opacity-50" : ""}`}>
-                    <AccordionTrigger className="first-box-accordion" 
-                        onClick={(e) => {
-                            if (!activeSteps[5]) {
-                                e.preventDefault(); // this blocks the expansion when the step is not selected
-                            } else {
-                                setIsOpen5((prev) => !prev); // toggle accordion freely when active
-                            }
-                        }}>
-                        <div className="relative inline-block">
-                            <RoundIcon imageSrc="/pill_emoji.svg" />
-                            <div
-                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] border-gray-400 check-toggle
-                                ${activeSteps[5] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
-                                onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStep(5);
-                                if (activeSteps[5]) {
-                                    setIsOpen5(false);
-                                } else {
-                                    setIsOpen5(true); // optionally expand when activating
-                                }
-                                }}
-                            >
-                                <Check className="w-3 h-3" />
-                            </div>
-                        </div>
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <RoundIcon imageSrc="/pill_emoji.svg"></RoundIcon>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 5</Badge>
@@ -997,35 +820,11 @@ export default function Pipeline() {
                     </div>
                 </AccordionItem>
             </Accordion>
-            <Accordion type="single" value={isOpen6 ? "item-1" : "item-0"} collapsible>
+            <Accordion type="single" collapsible>
                 <AccordionItem value="item-1">
-                    <div className={`accordion-wrapper ${!activeSteps[6] ? "opacity-50" : ""}`}>
-                    <AccordionTrigger className="first-box-accordion" 
-                        onClick={(e) => {
-                            if (!activeSteps[6]) {
-                                e.preventDefault(); // this blocks the expansion when the step is not selected
-                            } else {
-                                setIsOpen6((prev) => !prev); // toggle accordion freely when active
-                            }
-                        }}>
-                        <div className="relative inline-block">
-                            <RoundIcon imageSrc="/biohazard_emoji.svg" />
-                            <div
-                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] border-gray-400 check-toggle
-                                ${activeSteps[6] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
-                                onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStep(6);
-                                if (activeSteps[6]) {
-                                    setIsOpen6(false);
-                                } else {
-                                    setIsOpen6(true); // optionally expand when activating
-                                }
-                                }}
-                            >
-                                <Check className="w-3 h-3" />
-                            </div>
-                        </div>
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <RoundIcon imageSrc="/biohazard_emoji.svg"></RoundIcon>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 6</Badge>
@@ -1064,35 +863,11 @@ export default function Pipeline() {
                     </div>
                 </AccordionItem>
             </Accordion>
-            <Accordion type="single" value={isOpen7 ? "item-1" : "item-0"} collapsible>
+            <Accordion type="single" collapsible>
                 <AccordionItem value="item-1">
-                    <div className={`accordion-wrapper ${!activeSteps[7] ? "opacity-50" : ""}`}>
-                    <AccordionTrigger className="first-box-accordion" 
-                        onClick={(e) => {
-                            if (!activeSteps[7]) {
-                                e.preventDefault(); // this blocks the expansion when the step is not selected
-                            } else {
-                                setIsOpen7((prev) => !prev); // toggle accordion freely when active
-                            }
-                        }}>
-                        <div className="relative inline-block">
-                            <RoundIcon imageSrc="/barchart_emoji.svg" />
-                            <div
-                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] border-gray-400 check-toggle
-                                ${activeSteps[7] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
-                                onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStep(7);
-                                if (activeSteps[7]) {
-                                    setIsOpen7(false);
-                                } else {
-                                    setIsOpen7(true); // optionally expand when activating
-                                }
-                                }}
-                            >
-                                <Check className="w-3 h-3" />
-                            </div>
-                        </div>
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <RoundIcon imageSrc="/barchart_emoji.svg"></RoundIcon>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 7</Badge>
@@ -1131,35 +906,11 @@ export default function Pipeline() {
                     </div>
                 </AccordionItem>
             </Accordion>
-            <Accordion type="single" value={isOpen8 ? "item-1" : "item-0"} collapsible>
+            <Accordion type="single" collapsible>
                 <AccordionItem value="item-1">
-                    <div className={`accordion-wrapper ${!activeSteps[8] ? "opacity-50" : ""}`}>
-                    <AccordionTrigger className="first-box-accordion" 
-                        onClick={(e) => {
-                            if (!activeSteps[8]) {
-                                e.preventDefault(); // this blocks the expansion when the step is not selected
-                            } else {
-                                setIsOpen8((prev) => !prev); // toggle accordion freely when active
-                            }
-                        }}>
-                        <div className="relative inline-block">
-                            <RoundIcon imageSrc="/globe_emoji.svg" />
-                            <div
-                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] border-gray-400 check-toggle
-                                ${activeSteps[8] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
-                                onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStep(8);
-                                if (activeSteps[8]) {
-                                    setIsOpen8(false);
-                                } else {
-                                    setIsOpen8(true); // optionally expand when activating
-                                }
-                                }}
-                            >
-                                <Check className="w-3 h-3" />
-                            </div>
-                        </div>
+                    <div className="accordion-wrapper">
+                    <AccordionTrigger className="first-box-accordion">
+                        <RoundIcon imageSrc="/globe_emoji.svg"></RoundIcon>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 8</Badge>
