@@ -82,7 +82,7 @@ def CImmSim(protein_sequence: str):
         # cookie_button.click()
 
         # print page content for debugging
-        print("Page content after input:", driver.page_source)
+        # print("Page content after input:", driver.page_source)
 
         # 6️⃣ Submit the job
         submit_button = driver.find_element(By.XPATH, '//input[@type="submit" and @value="SUBMIT JOB"]')

@@ -33,6 +33,13 @@ import {
 import { BotMessageSquare, Check } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 
 export default function Pipeline() {
@@ -54,6 +61,9 @@ export default function Pipeline() {
     const [threshold, setThreshold] = useState<number>(0.4); // Default threshold value
     const [allergenicityThreshold, setAllergenicityThreshold] = useState<number>(0.3); // Default allergenicity threshold value
     const [selections, setSelections] = useState<string[]>([]);
+    const [analysisType, setAnalysisType] = useState<string>('linear');
+    const [comparisonOperator, setComparisonOperator] = useState<string>('less');
+    const [identityThreshold, setIdentityThreshold] = useState<string>('100%');
 
     const [activeSteps, setActiveSteps] = useState<Record<number, boolean>>({
         1: true,
@@ -145,6 +155,25 @@ export default function Pipeline() {
   const handleSubmit = async (event: any) => {
     event.preventDefault();
 
+    console.log("Steps sent to backend: ", activeSteps);
+    try {
+        const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'upload_steps/';
+        console.log("Endpoint: ", endpoint);
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+                'Content-Type': 'application/json',  // <-- Add this
+            },
+            body: JSON.stringify({
+                activeSteps: activeSteps
+            }),
+        });
+        console.log("Response from upload_steps:", response);
+    } catch (error) {
+        console.error(error);
+    }
+
     if (activeSteps[1]) {
         if (uploadedFiles.length === 0 && sequence.trim() === '') {
             setError(true);
@@ -158,6 +187,25 @@ export default function Pipeline() {
             setConservancyError(true);
             alert("Please upload a file or paste a sequence for conservancy analysis.");
             return;
+        }
+        try {
+            const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'upload_conservancy_parameters/';
+            console.log("Endpoint: ", endpoint);
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    analysisType: analysisType,
+                    comparisonOperator: comparisonOperator,
+                    identityThreshold: identityThreshold
+                }),
+            });
+            console.log("Response from upload_conservancy_parameters:", response);
+        } catch (error) {
+            console.error(error);
         }
     }
     
@@ -525,7 +573,7 @@ export default function Pipeline() {
                     <Label htmlFor="select-all">Select All</Label>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                {/* <div className="flex items-center space-x-2">
                     <RadioGroupItem
                     value="deselect-all"
                     id="deselect-all"
@@ -541,9 +589,9 @@ export default function Pipeline() {
                         8: false,
                         });
                     }}
-                    />
-                    <Label htmlFor="deselect-all">Deselect All</Label>
-                </div>
+                    /> */}
+                    {/* <Label htmlFor="deselect-all">Deselect All</Label> */}
+                {/* </div> */}
                 </RadioGroup>
             </div>
             
@@ -572,7 +620,8 @@ export default function Pipeline() {
                         ${activeSteps[1] ? "bg-blue-600 border-gray-400 text-white" : "bg-white border-gray-400 text-transparent"}`}
                         onClick={(e) => {
                         e.stopPropagation(); // prevent accordion toggle
-                        toggleStep(1); // toggle step active state
+                        setError(true);
+                        console.log("Step 1 cannot be deselected for this pipeline.")
 
                         // Automatically collapse accordion if step becomes inactive
                         if (activeSteps[1]) {
@@ -650,9 +699,10 @@ export default function Pipeline() {
                                 ${activeSteps[2] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
                                 onClick={(e) => {
                                 e.stopPropagation();
-                                toggleStep(2);
+                                setConservancyError(true);
+                                console.log("Step 2 cannot be deselected for this pipeline.")
                                 if (activeSteps[2]) {
-                                    setIsOpen2(false);
+                                    setIsOpen2(true);
                                 } else {
                                     setIsOpen2(true); // optionally expand when activating
                                 }
@@ -664,9 +714,13 @@ export default function Pipeline() {
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 2</Badge>
-                                <h1>T-Cell Epitope Prediction</h1>
+                                <h1 className={conservancyError ? "text-red-600" : ""}>T-Cell Epitope Prediction</h1>
+                                <Badge variant="required_badge">Required</Badge>
+                                {conservancyError && (
+                                    <Image src="/exclamation_emoji.svg" alt="Error Icon" width={16} height={16} className="flashing-error" />
+                                )}
                             </div>
-                            <h1 className="description-text">Predict T-Cell epitopes from the uploaded sequence</h1>
+                            <h1 className={conservancyError ? "description-text-error" : "description-text"}>Predict T-Cell epitopes from the uploaded sequence</h1>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -741,13 +795,9 @@ export default function Pipeline() {
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 3</Badge>
-                                <h1 className={conservancyError ? "text-red-600" : ""}>Epitope Conservancy Analysis</h1>
-                                <Badge variant="required_badge">Required</Badge>
-                                {conservancyError && (
-                                    <Image src="/exclamation_emoji.svg" alt="Error Icon" width={16} height={16} className="flashing-error" />
-                                )}
+                                <h1>Epitope Conservancy Analysis</h1>
                             </div>
-                            <h1 className={conservancyError ? "description-text-error" : "description-text"}>Analyse epitope conservation across variants</h1>
+                            <h1 className="description-text">Analyse epitope conservation across variants</h1>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -797,6 +847,67 @@ export default function Pipeline() {
                                     IEDB
                                 </Toggle>
                             </div>
+                            {advancedMode && (
+                            <div className="flex w-full flex-col gap-[6px]">
+                                <div className="line-seperator-box">
+                                <div className="line-seperator"></div>
+                                </div>
+                                <div className="flex flex-row items-center gap-[12px]">
+                                <h1 className="input-box-header">Advanced Parameters</h1>
+                                <Badge variant="red">Advanced</Badge>
+                                </div>
+                                <div className="flex flex-col gap-[12px] mt-[12px]">
+                                    <h2 className="parameter-heading">Analysis Type</h2>
+                                    <RadioGroup defaultValue="linear" className="flex flex-row items-center space-x-4" onValueChange={(value) => setAnalysisType(value)}>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem
+                                            value="linear"
+                                            id="linear"
+                                            />
+                                            <Label className="input-text" htmlFor="linear">Linear</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem
+                                            value="discontinuous"
+                                            id="discontinuous"
+                                            />
+                                            <Label className="input-text" htmlFor="discontinuous">Discontinuous</Label>
+                                        </div>
+                                    </RadioGroup>
+                                    <h2 className="parameter-heading mt-[8px]">Sequence Identity Threshold</h2>
+                                    <div className="flex flex-row items-center gap-[8px]">
+                                        <Select onValueChange={(value) => setComparisonOperator(value)}>
+                                            <SelectTrigger className="w-[60px]">
+                                                <SelectValue placeholder="<" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="less">{'<'}</SelectItem>
+                                                <SelectItem value="more_or_equal">{'>='}</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Select onValueChange={(value) => setIdentityThreshold(value)}>
+                                            <SelectTrigger className="w-[120px]">
+                                                <SelectValue placeholder="100%" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="100%">100%</SelectItem>
+                                                <SelectItem value="90%">90%</SelectItem>
+                                                <SelectItem value="80%">80%</SelectItem>
+                                                <SelectItem value="70%">70%</SelectItem>
+                                                <SelectItem value="60%">60%</SelectItem>
+                                                <SelectItem value="50%">50%</SelectItem>
+                                                <SelectItem value="40%">40%</SelectItem>
+                                                <SelectItem value="30%">30%</SelectItem>
+                                                <SelectItem value="20%">20%</SelectItem>
+                                                <SelectItem value="10%">10%</SelectItem>
+                                                <SelectItem value="0%">0%</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                            )}
                         </div>
                         
                     </AccordionContent>

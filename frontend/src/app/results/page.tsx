@@ -116,6 +116,7 @@ export default function ResultsPage() {
   const [currentMessage, setCurrentMessage] = useState(1);
   const [results, setResults] = useState<ResultCompleteEntry[]>([]);
   const [selections, setSelections] = useState<string>("");
+  const [steps, setSteps] = useState<Record<number, boolean>>({});
 
   const messages = [
     "Processing sequence data...",
@@ -386,6 +387,20 @@ export default function ResultsPage() {
         setPipelineName(data.pipeline_name);
       } catch (error) {
         console.error("Error fetching pipeline name:", error);
+      }
+
+      try {
+        const response = await fetch(
+          process.env.NEXT_PUBLIC_API_ENDPOINT + "get_steps/"
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch steps");
+        }
+        const data = await response.json();
+        setSteps(data.steps);
+        console.log("Steps from backend:", data.steps);
+      } catch (error) {
+        console.error("Error fetching steps:", error);
       }
 
       try {
@@ -799,48 +814,62 @@ export default function ResultsPage() {
                   <h1>Results Summary</h1>
                 </div>
               </TabsTrigger>
-              <TabsTrigger value="step2">
-                <div className="flex flex-col items-center gap-[4px] w-full">
-                  <RoundIcon imageSrc="/dna_emoji.svg"></RoundIcon>
-                  <h1>T-Cell Epitope Prediction</h1>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger value="step3">
-                <div className="flex flex-col items-center gap-[4px] w-full">
-                  <RoundIcon imageSrc="/tree_emoji.svg"></RoundIcon>
-                  <h1>Conservancy Analysis</h1>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger value="step4">
-                <div className="flex flex-col items-center gap-[4px] w-full">
-                  <RoundIcon imageSrc="/shield_emoji.svg"></RoundIcon>
-                  <h1>Antigenicity Screening</h1>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger value="step5">
-                <div className="flex flex-col items-center gap-[4px] w-full">
-                  <RoundIcon imageSrc="/pill_emoji.svg"></RoundIcon>
-                  <h1>Allergenicity Screening</h1>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger value="step6">
-                <div className="flex flex-col items-center gap-[4px] w-full">
-                  <RoundIcon imageSrc="/biohazard_emoji.svg"></RoundIcon>
-                  <h1>Toxicity Screening</h1>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger value="step7">
+              {steps[2] && (
+                <TabsTrigger value="step2">
+                  <div className="flex flex-col items-center gap-[4px] w-full">
+                    <RoundIcon imageSrc="/dna_emoji.svg"></RoundIcon>
+                    <h1>T-Cell Epitope Prediction</h1>
+                  </div>
+                </TabsTrigger>
+              )}
+              {steps[3] && (
+                <TabsTrigger value="step3">
+                  <div className="flex flex-col items-center gap-[4px] w-full">
+                    <RoundIcon imageSrc="/tree_emoji.svg"></RoundIcon>
+                    <h1>Conservancy Analysis</h1>
+                  </div>
+                </TabsTrigger>
+              )}
+              {steps[4] && (
+                <TabsTrigger value="step4">
+                  <div className="flex flex-col items-center gap-[4px] w-full">
+                    <RoundIcon imageSrc="/shield_emoji.svg"></RoundIcon>
+                    <h1>Antigenicity Screening</h1>
+                  </div>
+                </TabsTrigger>
+              )}
+              {steps[5] && (
+                <TabsTrigger value="step5">
+                  <div className="flex flex-col items-center gap-[4px] w-full">
+                    <RoundIcon imageSrc="/pill_emoji.svg"></RoundIcon>
+                    <h1>Allergenicity Screening</h1>
+                  </div>
+                </TabsTrigger>
+              )}
+              {steps[6] && (
+                <TabsTrigger value="step6">
+                  <div className="flex flex-col items-center gap-[4px] w-full">
+                    <RoundIcon imageSrc="/biohazard_emoji.svg"></RoundIcon>
+                    <h1>Toxicity Screening</h1>
+                  </div>
+                </TabsTrigger>
+              )}
+              {steps[7] && (
+                <TabsTrigger value="step7">
                 <div className="flex flex-col items-center gap-[4px] w-full">
                   <RoundIcon imageSrc="/barchart_emoji.svg"></RoundIcon>
                   <h1>Cytokine Analysis</h1>
                 </div>
               </TabsTrigger>
-              <TabsTrigger value="step8">
-                <div className="flex flex-col items-center gap-[4px] w-full">
-                  <RoundIcon imageSrc="/globe_emoji.svg"></RoundIcon>
-                  <h1>Population Coverage</h1>
-                </div>
+              )}
+              {steps[8] && (
+                <TabsTrigger value="step8">
+                  <div className="flex flex-col items-center gap-[4px] w-full">
+                    <RoundIcon imageSrc="/globe_emoji.svg"></RoundIcon>
+                    <h1>Population Coverage</h1>
+                  </div>
               </TabsTrigger>
+              )}
             </TabsList>
             <TabsContent value="summary">
               <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">

@@ -68,6 +68,23 @@ global_results = {
     "population_coverage": []
 }
 
+global_steps: dict = {
+        1: True,
+        2: True,
+        3: True,
+        4: True,
+        5: True,
+        6: True,
+        7: True,
+        8: True,
+}
+
+global_conservancy_parameters = {
+    "analysisType": "linear",
+    "comparisonOperator": "less",
+    "identityThreshold": "100%"
+}
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -106,6 +123,59 @@ async def get_pipeline_name():
     print("Current pipeline name:", global_pipeline_name)
     return {"pipeline_name": global_pipeline_name}
 
+class StepRequest(BaseModel):
+    activeSteps: dict
+
+@app.post("/upload_steps/")
+async def upload_steps(request: StepRequest):
+    """
+    Handles the steps upload.
+    Returns a message indicating the steps have been uploaded.
+    """
+    print("Received steps:", request.activeSteps)
+    global global_steps
+    global_steps = request.activeSteps
+    return {"message": f"Steps set to {global_steps}"}
+
+@app.get("/get_steps/")
+async def get_steps():
+    """
+    Returns the current steps.
+    """
+    print("Current steps:", global_steps)
+    return {"steps": global_steps}
+
+### NEW
+class ConservancyParameters(BaseModel):
+    analysisType: str
+    comparisonOperator: str
+    identityThreshold: str
+
+@app.post("/upload_conservancy_parameters/")
+async def upload_conservancy_parameters(request: ConservancyParameters):
+    """
+    Handles the conservancy parameters upload.
+    Returns a message indicating the conservancy parameters have been uploaded.
+    """
+    print("Received conservancy parameters:", request.analysisType, request.comparisonOperator, request.identityThreshold)
+    global global_conservancy_parameters
+    global_conservancy_parameters = {
+        "analysisType": request.analysisType,
+        "comparisonOperator": request.comparisonOperator,
+        "identityThreshold": request.identityThreshold
+    }
+    return {"message": f"Conservancy parameters set to {global_conservancy_parameters}"}
+
+@app.get("/get_conservancy_parameters/")
+async def get_conservancy_parameters():
+    """
+    Returns the current conservancy parameters.
+    """
+    print("Current conservancy parameters:", global_conservancy_parameters)
+    return {"conservancy_parameters": global_conservancy_parameters}
+
+### END NEW
+
 class ThresholdRequest(BaseModel):
     threshold: float
 
@@ -120,8 +190,13 @@ async def upload_threshold(request: ThresholdRequest):
     global_threshold = request.threshold
     return {"message": f"Threshold set to {global_threshold}"}
 
-class ThresholdRequest(BaseModel):
-    threshold: float
+@app.get("/get_threshold/")
+async def get_threshold():
+    """
+    Returns the current threshold value.
+    """
+    print("Current threshold:", global_threshold)
+    return {"threshold": global_threshold}
 
 @app.post("/upload_allergenicity_threshold/")
 async def upload_allergenicity_threshold(request: ThresholdRequest):
@@ -133,6 +208,14 @@ async def upload_allergenicity_threshold(request: ThresholdRequest):
     global global_allergenicity_threshold
     global_allergenicity_threshold = request.threshold
     return {"message": f"Allergenicity threshold set to {global_allergenicity_threshold}"}
+
+@app.get("/get_allergenicity_threshold/")
+async def get_allergenicity_threshold():
+    """
+    Returns the current allergenicity threshold value.
+    """
+    print("Current allergenicity threshold:", global_allergenicity_threshold)
+    return {"threshold": global_allergenicity_threshold}
 
 class SelectionsRequest(BaseModel):
     selections: List[str]
@@ -208,13 +291,19 @@ async def create_upload_conservancy_file(file_uploads: list[UploadFile], request
     filenames = []
     for file_upload in file_uploads:
         data = await file_upload.read()
-        print(f"Sequence from file {data}")
+        # print(f"Sequence from file {data}")
+        # Check it doesn't end in txt, docx, or doc, if so, return error
+        if file_upload.filename.endswith(('.txt', '.docx', '.doc')):
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "File must be in FASTA format, not .txt, .docx, or .doc."}
+            )
         # Convert into FASTA format string
         fasta_sequence = f"{data.decode('utf-8')}"
         # Store the sequence in the global variable
         global global_sequence
         global_sequence = fasta_sequence
-        print(f"FASTA Sequence: {fasta_sequence}")
+        # print(f"FASTA Sequence: {fasta_sequence}")
         save_to = os.path.join(UPLOAD_C_FOLDER, file_upload.filename)
         with open(save_to, 'wb') as f:
             f.write(data)
@@ -232,7 +321,7 @@ async def upload_conservancy_sequence(request: ConservancySequenceUpload):
     Handles sequence uploads.
     Returns the uploaded sequence.
     """
-    print("Received sequence:", request.conservancySequence)
+    # print("Received sequence:", request.conservancySequence)
     global global__conservancy_sequence
     global__conservancy_sequence = request.conservancySequence
     return {"conservancy_sequence": request.conservancySequence}
@@ -262,15 +351,15 @@ async def epitope_prediction(request: EpitopePredictionRequest):
     Function for epitope prediction via. IEDB Script.
     """
     # Here you would call your epitope prediction logic
-    print("Received epitope prediction request:")
+    # print("Received epitope prediction request:")
     output, hla_alleles = IEDB_epitope_prediction(global_sequence, request.alleles, global_selections)
-    print("Output from IEDB:", output)
-    print("HLA Alleles from IEDB:", hla_alleles)
+    # print("Output from IEDB:", output)
+    # print("HLA Alleles from IEDB:", hla_alleles)
     global global_results
     global_results["epitope_prediction"] = output
     global global_sequence_and_alleles
     global_sequence_and_alleles = hla_alleles
-    print("Global Sequence and Alleles updated:", global_sequence_and_alleles)
+    # print("Global Sequence and Alleles updated:", global_sequence_and_alleles)
     return output
 
 class ConservancyAnalysisRequest(BaseModel):
@@ -281,7 +370,10 @@ async def conservancy_analysis(request: ConservancyAnalysisRequest):
     """
     Function for conservancy analysis via. IEDB Script.
     """
-    result = IEDB_conservancy_analysis(request.peptides)
+    result = IEDB_conservancy_analysis(request.peptides, 
+                                       global_conservancy_parameters["analysisType"],
+                                       global_conservancy_parameters["comparisonOperator"], 
+                                       global_conservancy_parameters["identityThreshold"])
     print("Conservancy Analysis Result:", result)
     # Extract seuences and conservation scores
     cleaned_results = []
