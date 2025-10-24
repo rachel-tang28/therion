@@ -30,7 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { BotMessageSquare, Check } from "lucide-react"
+import { BotMessageSquare, Check, CheckSquare2 } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
@@ -40,6 +40,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 
 export default function Pipeline() {
@@ -525,7 +532,7 @@ export default function Pipeline() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-            <div className="flex flex-col normal-box">
+            <div className="flex flex-col normal-box sticky top-0 bg-white z-10 shadow-md p-[12px] gap-[12px]">
                 <div className="flex flex-row w-full items-center gap-[8px]">
                     <Image src="/pipeline.svg" alt="Pipeline Icon" width={16} height={16}></Image>
                     <h1>Pipeline Configuration</h1>
@@ -534,7 +541,24 @@ export default function Pipeline() {
                 <div className="flex flex-row w-full items-center justify-between">
                     <div className="flex flex-col gap-[6px] w-full">
                         <h2 className="pl-[2px] input-box-header">Pipeline Name</h2>
-                        <Input className="input-text w-1/2" placeholder="Enter pipeline name..." value={pipelineName} onChange={(e) => setPipelineName(e.target.value)}></Input>
+                        <div className="flex flex-row w-full items-center gap-[8px]">
+                            <Input 
+                                className={`input-text max-w-[500px] ${pipelineName ? 'border-green-500 focus-visible:ring-green-500' : ''}`}
+                                placeholder="Enter pipeline name..." 
+                                value={pipelineName} 
+                                onChange={(e) => setPipelineName(e.target.value)}
+                            />
+                            {/* keep in DOM so CSS transition can animate on enter */}
+                            <span className="inline-block w-5 h-5">
+                                <CheckSquare2
+                                    className={`w-5 h-5 text-green-600 transform transition-opacity transition-transform duration-300 ease-out ${
+                                        pipelineName ? "opacity-80 translate-y-0" : "opacity-0 -translate-y-1"
+                                    }`}
+                                    aria-hidden={!pipelineName}
+                                />
+                            </span>
+                        </div>
+                        
                     </div>
                 </div>
                 <div className="line-seperator-box">
@@ -550,26 +574,43 @@ export default function Pipeline() {
             <div className="flex flex-row justify-between">
                 <h1>Pipeline Workflow</h1>
                 
-                <RadioGroup defaultValue="select-all" className="flex flex-row items-center space-x-4 pr-[8px]">
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                    value="select-all"
-                    id="select-all"
-                    onClick={() => {
-                        setActiveSteps({
-                        1: true,
-                        2: true,
-                        3: true,
-                        4: true,
-                        5: true,
-                        6: true,
-                        7: true,
-                        8: true,
-                        });
-                    }}
-                    />
-                    <Label htmlFor="select-all">Select All</Label>
-                </div>
+                <TooltipProvider>
+                    <RadioGroup
+                        defaultValue="select-all"
+                        className="flex flex-row items-center space-x-4 pr-[8px]"
+                    >
+                        <div className="flex items-center space-x-2">
+                        <Tooltip delayDuration={100} >
+                            <TooltipTrigger asChild>
+                            {/* 👇 This is the actual trigger for the tooltip */}
+                            <div className="flex items-center space-x-2 cursor-pointer">
+                                <RadioGroupItem
+                                value="select-all"
+                                id="select-all"
+                                onClick={() => {
+                                    setActiveSteps({
+                                    1: true,
+                                    2: true,
+                                    3: true,
+                                    4: true,
+                                    5: true,
+                                    6: true,
+                                    7: true,
+                                    8: true,
+                                    })
+                                }}
+                                />
+                                <Label htmlFor="select-all">Select All</Label>
+                            </div>
+                            </TooltipTrigger>
+
+                            <TooltipContent>
+                            <p>Activate all steps; To deselect individual steps, click the blue check mark on each step icon.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                        </div>
+                    </RadioGroup>
+                    </TooltipProvider>
 
                 {/* <div className="flex items-center space-x-2">
                     <RadioGroupItem
@@ -590,7 +631,6 @@ export default function Pipeline() {
                     /> */}
                     {/* <Label htmlFor="deselect-all">Deselect All</Label> */}
                 {/* </div> */}
-                </RadioGroup>
             </div>
             
             <Accordion
@@ -769,25 +809,44 @@ export default function Pipeline() {
                                 setIsOpen3((prev) => !prev); // toggle accordion freely when active
                             }
                         }}>
-                        <div className="relative inline-block">
-                            <RoundIcon imageSrc="/tree_emoji.svg" />
+                        <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                            {/* Tooltip triggers when hovering anywhere on this block */}
                             <div
-                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] border-gray-400 check-toggle
-                                ${activeSteps[3] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
+                                className="relative inline-block cursor-pointer"
                                 onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStep(3);
-                                // Automatically collapse accordion if step becomes inactive
-                                if (activeSteps[3]) {
-                                    setIsOpen3(false);
-                                } else {
-                                    setIsOpen3(true); // optionally expand when activating
-                                }
+                                    e.stopPropagation()
+                                    toggleStep(3)
+                                    if (activeSteps[3]) {
+                                    setIsOpen3(false)
+                                    } else {
+                                    setIsOpen3(true)
+                                    }
                                 }}
                             >
+                                {/* Round icon */}
+                                <RoundIcon imageSrc="/tree_emoji.svg" />
+
+                                {/* Check overlay */}
+                                <div
+                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center border-[2px] border-gray-400 check-toggle transition-colors
+                                ${activeSteps[3] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
+                                >
                                 <Check className="w-3 h-3" />
+                                </div>
                             </div>
-                        </div>
+                            </TooltipTrigger>
+
+                            <TooltipContent side="top">
+                            <p>
+                                {activeSteps[3]
+                                ? "Click to deselect this step!"
+                                : "Click to select this step!"}
+                            </p>
+                            </TooltipContent>
+                        </Tooltip>
+                        </TooltipProvider>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 3</Badge>
@@ -908,24 +967,44 @@ export default function Pipeline() {
                                 setIsOpen4((prev) => !prev); // toggle accordion freely when active
                             }
                         }}>
-                        <div className="relative inline-block">
-                            <RoundIcon imageSrc="/shield_emoji.svg" />
+                        <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                            {/* Tooltip triggers when hovering anywhere on this block */}
                             <div
-                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] border-gray-400 check-toggle
-                                ${activeSteps[4] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
+                                className="relative inline-block cursor-pointer"
                                 onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStep(4);
-                                if (activeSteps[4]) {
-                                    setIsOpen4(false);
-                                } else {
-                                    setIsOpen4(true); // optionally expand when activating
-                                }
+                                    e.stopPropagation()
+                                    toggleStep(4)
+                                    if (activeSteps[4]) {
+                                    setIsOpen4(false)
+                                    } else {
+                                    setIsOpen4(true)
+                                    }
                                 }}
                             >
+                                {/* Round icon */}
+                                <RoundIcon imageSrc="/shield_emoji.svg" />
+
+                                {/* Check overlay */}
+                                <div
+                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center border-[2px] border-gray-400 check-toggle transition-colors
+                                ${activeSteps[4] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
+                                >
                                 <Check className="w-3 h-3" />
+                                </div>
                             </div>
-                        </div>
+                            </TooltipTrigger>
+
+                            <TooltipContent side="top">
+                            <p>
+                                {activeSteps[4]
+                                ? "Click to deselect this step!"
+                                : "Click to select this step!"}
+                            </p>
+                            </TooltipContent>
+                        </Tooltip>
+                        </TooltipProvider>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 4</Badge>
@@ -1005,24 +1084,44 @@ export default function Pipeline() {
                                 setIsOpen5((prev) => !prev); // toggle accordion freely when active
                             }
                         }}>
-                        <div className="relative inline-block">
-                            <RoundIcon imageSrc="/pill_emoji.svg" />
+                        <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                            {/* Tooltip triggers when hovering anywhere on this block */}
                             <div
-                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] border-gray-400 check-toggle
-                                ${activeSteps[5] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
+                                className="relative inline-block cursor-pointer"
                                 onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStep(5);
-                                if (activeSteps[5]) {
-                                    setIsOpen5(false);
-                                } else {
-                                    setIsOpen5(true); // optionally expand when activating
-                                }
+                                    e.stopPropagation()
+                                    toggleStep(5)
+                                    if (activeSteps[5]) {
+                                    setIsOpen5(false)
+                                    } else {
+                                    setIsOpen5(true)
+                                    }
                                 }}
                             >
+                                {/* Round icon */}
+                                <RoundIcon imageSrc="/pill_emoji.svg" />
+
+                                {/* Check overlay */}
+                                <div
+                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center border-[2px] border-gray-400 check-toggle transition-colors
+                                ${activeSteps[5] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
+                                >
                                 <Check className="w-3 h-3" />
+                                </div>
                             </div>
-                        </div>
+                            </TooltipTrigger>
+
+                            <TooltipContent side="top">
+                            <p>
+                                {activeSteps[5]
+                                ? "Click to deselect this step!"
+                                : "Click to select this step!"}
+                            </p>
+                            </TooltipContent>
+                        </Tooltip>
+                        </TooltipProvider>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 5</Badge>
@@ -1101,24 +1200,44 @@ export default function Pipeline() {
                                 setIsOpen6((prev) => !prev); // toggle accordion freely when active
                             }
                         }}>
-                        <div className="relative inline-block">
-                            <RoundIcon imageSrc="/biohazard_emoji.svg" />
+                        <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                            {/* Tooltip triggers when hovering anywhere on this block */}
                             <div
-                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] border-gray-400 check-toggle
-                                ${activeSteps[6] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
+                                className="relative inline-block cursor-pointer"
                                 onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStep(6);
-                                if (activeSteps[6]) {
-                                    setIsOpen6(false);
-                                } else {
-                                    setIsOpen6(true); // optionally expand when activating
-                                }
+                                    e.stopPropagation()
+                                    toggleStep(6)
+                                    if (activeSteps[6]) {
+                                    setIsOpen6(false)
+                                    } else {
+                                    setIsOpen6(true)
+                                    }
                                 }}
                             >
+                                {/* Round icon */}
+                                <RoundIcon imageSrc="/biohazard_emoji.svg" />
+
+                                {/* Check overlay */}
+                                <div
+                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center border-[2px] border-gray-400 check-toggle transition-colors
+                                ${activeSteps[6] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
+                                >
                                 <Check className="w-3 h-3" />
+                                </div>
                             </div>
-                        </div>
+                            </TooltipTrigger>
+
+                            <TooltipContent side="top">
+                            <p>
+                                {activeSteps[6]
+                                ? "Click to deselect this step!"
+                                : "Click to select this step!"}
+                            </p>
+                            </TooltipContent>
+                        </Tooltip>
+                        </TooltipProvider>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 6</Badge>
@@ -1168,24 +1287,44 @@ export default function Pipeline() {
                                 setIsOpen7((prev) => !prev); // toggle accordion freely when active
                             }
                         }}>
-                        <div className="relative inline-block">
-                            <RoundIcon imageSrc="/barchart_emoji.svg" />
+                        <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                            {/* Tooltip triggers when hovering anywhere on this block */}
                             <div
-                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] border-gray-400 check-toggle
-                                ${activeSteps[7] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
+                                className="relative inline-block cursor-pointer"
                                 onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStep(7);
-                                if (activeSteps[7]) {
-                                    setIsOpen7(false);
-                                } else {
-                                    setIsOpen7(true); // optionally expand when activating
-                                }
+                                    e.stopPropagation()
+                                    toggleStep(7)
+                                    if (activeSteps[7]) {
+                                    setIsOpen7(false)
+                                    } else {
+                                    setIsOpen7(true)
+                                    }
                                 }}
                             >
+                                {/* Round icon */}
+                                <RoundIcon imageSrc="/barchart_emoji.svg" />
+
+                                {/* Check overlay */}
+                                <div
+                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center border-[2px] border-gray-400 check-toggle transition-colors
+                                ${activeSteps[7] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
+                                >
                                 <Check className="w-3 h-3" />
+                                </div>
                             </div>
-                        </div>
+                            </TooltipTrigger>
+
+                            <TooltipContent side="top">
+                            <p>
+                                {activeSteps[7]
+                                ? "Click to deselect this step!"
+                                : "Click to select this step!"}
+                            </p>
+                            </TooltipContent>
+                        </Tooltip>
+                        </TooltipProvider>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 7</Badge>
@@ -1235,24 +1374,44 @@ export default function Pipeline() {
                                 setIsOpen8((prev) => !prev); // toggle accordion freely when active
                             }
                         }}>
-                        <div className="relative inline-block">
-                            <RoundIcon imageSrc="/globe_emoji.svg" />
+                        <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                            {/* Tooltip triggers when hovering anywhere on this block */}
                             <div
-                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer border-[2px] border-gray-400 check-toggle
-                                ${activeSteps[8] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
+                                className="relative inline-block cursor-pointer"
                                 onClick={(e) => {
-                                e.stopPropagation();
-                                toggleStep(8);
-                                if (activeSteps[8]) {
-                                    setIsOpen8(false);
-                                } else {
-                                    setIsOpen8(true); // optionally expand when activating
-                                }
+                                    e.stopPropagation()
+                                    toggleStep(8)
+                                    if (activeSteps[8]) {
+                                    setIsOpen8(false)
+                                    } else {
+                                    setIsOpen8(true)
+                                    }
                                 }}
                             >
+                                {/* Round icon */}
+                                <RoundIcon imageSrc="/globe_emoji.svg" />
+
+                                {/* Check overlay */}
+                                <div
+                                className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center border-[2px] border-gray-400 check-toggle transition-colors
+                                ${activeSteps[8] ? "bg-blue-600 text-white" : "bg-white text-transparent"}`}
+                                >
                                 <Check className="w-3 h-3" />
+                                </div>
                             </div>
-                        </div>
+                            </TooltipTrigger>
+
+                            <TooltipContent side="top">
+                            <p>
+                                {activeSteps[8]
+                                ? "Click to deselect this step!"
+                                : "Click to select this step!"}
+                            </p>
+                            </TooltipContent>
+                        </Tooltip>
+                        </TooltipProvider>
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 8</Badge>
