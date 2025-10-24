@@ -21,6 +21,7 @@ import AntigenicityTable from "@/components/ui/antigenicity_table";
 import AllergenicityTable from "@/components/ui/allergenicity_table";
 import ToxicityTable from "@/components/ui/toxicity_table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button";
 
 interface ResultEntry {
   sequence: string;
@@ -719,6 +720,53 @@ export default function ResultsPage() {
     ];
   }, [toxicityScreening]);
 
+  function downloadResultsAsCSV(results: ResultCompleteEntry[]) {
+    if (!results || results.length === 0) {
+      alert("No results available to download yet.");
+      return;
+    }
+
+    // Define CSV headers
+    const headers = [
+      "Sequence",
+      "Binding Score",
+      "HLA Allele",
+      "Antigenicity",
+      "Allergenicity",
+      "Toxicity",
+      "Rank",
+    ];
+
+    // Map data into CSV rows
+    const rows = results.map((r) => [
+      r.sequence,
+      r.binding_score,
+      r.allele,
+      r.antigen ? "Antigen" : "Non-Antigen",
+      r.allergen ? "Allergen" : "Non-Allergen",
+      r.toxin ? "Toxin" : "Non-Toxin",
+      r.rank,
+    ]);
+
+    // Join headers and rows into CSV text
+    const csvContent = [headers, ...rows]
+      .map((e) => e.join(","))
+      .join("\n");
+
+    // Create a Blob and trigger download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    // get date and time for filename
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[:.]/g, "-");
+    link.setAttribute("download", `pipeline_results_${timestamp}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4 animate-in fade-in duration-500">
@@ -873,9 +921,15 @@ export default function ResultsPage() {
             </TabsList>
             <TabsContent value="summary">
               <div className="flex flex-col items-center justify-center w-full h-full pt-[24px]">
-                <h2 className="text-lg font-semibold mb-4">
-                  Results Summary
-                </h2>
+                <div className="w-full flex flex-row p-[8px] mb-[2px]">
+                  <h2 className="text-lg font-semibold mb-4 w-full justify-center flex">
+                    Results Summary
+                  </h2>
+                  <Button variant="default" onClick={() => downloadResultsAsCSV(results)}>
+                    <h2 className="run-text">Download Results as CSV</h2>
+                </Button>    
+                </div>
+                
                 <div className="w-full max-w-4xl">
                   <ResultsCompleteTable data={results} />
                 </div>

@@ -9,7 +9,7 @@ import os
 
 UPLOAD_C_FOLDER = "/Users/rachell.tang/Documents/Thesis Project_Rachel Tang/thesis-project/backend/c_uploads"
 
-def IEDB_conservancy_analysis(peptides: list[str], analysis_type: str, comparison_operator: str, threshold_value: str):
+def IEDB_conservancy_analysis(peptides: list[str], comparison_operator: str, threshold_value: str):
     fasta_input = ""
     for i, pep in enumerate(peptides, 1):
         line = f">seq{i}\n{pep}\n".lstrip()
@@ -35,7 +35,7 @@ def IEDB_conservancy_analysis(peptides: list[str], analysis_type: str, compariso
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
 
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(options=options)
 
     # Remove navigator.webdriver to help avoid detection
     driver.execute_cdp_cmd(
@@ -52,7 +52,7 @@ def IEDB_conservancy_analysis(peptides: list[str], analysis_type: str, compariso
     # try:
     driver.get("http://tools.iedb.org/conservancy/")
 
-    print("Obtained parameters: ", analysis_type, comparison_operator, threshold_value)
+    print("Obtained parameters: ", comparison_operator, threshold_value)
     threshold_value = threshold_value.replace("%", "")  # Remove % sign if present
 
     peptide_box = WebDriverWait(driver, 30).until(
@@ -82,10 +82,6 @@ def IEDB_conservancy_analysis(peptides: list[str], analysis_type: str, compariso
     print(f"Using conservancy file: {conservancy_file_path}")
 
     # New parameters
-    # Analysis type
-    radio_button = driver.find_element(By.XPATH, f'//input[@name="type" and @value="{analysis_type}"]')
-    radio_button.click()
-    print(f"Selected analysis type: {analysis_type}")
 
     # Sequence identity threshold
     epitope_option_select = Select(driver.find_element(By.NAME, "epitope_option"))
@@ -121,5 +117,5 @@ def IEDB_conservancy_analysis(peptides: list[str], analysis_type: str, compariso
 
 if __name__ == "__main__":
     peptides = ["YLQPRTFLL", "FIAGLIAIV", "KAFSPEVIPMF", "KTFPPTEPK"]
-    results = IEDB_conservancy_analysis(peptides, "linear", "less", "100%")
+    results = IEDB_conservancy_analysis(peptides, "less", "100%")
     print("Conservancy results:", results)

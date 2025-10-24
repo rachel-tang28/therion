@@ -80,7 +80,6 @@ global_steps: dict = {
 }
 
 global_conservancy_parameters = {
-    "analysisType": "linear",
     "comparisonOperator": "less",
     "identityThreshold": "100%"
 }
@@ -147,7 +146,6 @@ async def get_steps():
 
 ### NEW
 class ConservancyParameters(BaseModel):
-    analysisType: str
     comparisonOperator: str
     identityThreshold: str
 
@@ -157,10 +155,9 @@ async def upload_conservancy_parameters(request: ConservancyParameters):
     Handles the conservancy parameters upload.
     Returns a message indicating the conservancy parameters have been uploaded.
     """
-    print("Received conservancy parameters:", request.analysisType, request.comparisonOperator, request.identityThreshold)
+    print("Received conservancy parameters:", request.comparisonOperator, request.identityThreshold)
     global global_conservancy_parameters
     global_conservancy_parameters = {
-        "analysisType": request.analysisType,
         "comparisonOperator": request.comparisonOperator,
         "identityThreshold": request.identityThreshold
     }
@@ -370,8 +367,7 @@ async def conservancy_analysis(request: ConservancyAnalysisRequest):
     """
     Function for conservancy analysis via. IEDB Script.
     """
-    result = IEDB_conservancy_analysis(request.peptides, 
-                                       global_conservancy_parameters["analysisType"],
+    result = IEDB_conservancy_analysis(request.peptides,
                                        global_conservancy_parameters["comparisonOperator"], 
                                        global_conservancy_parameters["identityThreshold"])
     print("Conservancy Analysis Result:", result)

@@ -61,7 +61,6 @@ export default function Pipeline() {
     const [threshold, setThreshold] = useState<number>(0.4); // Default threshold value
     const [allergenicityThreshold, setAllergenicityThreshold] = useState<number>(0.3); // Default allergenicity threshold value
     const [selections, setSelections] = useState<string[]>([]);
-    const [analysisType, setAnalysisType] = useState<string>('linear');
     const [comparisonOperator, setComparisonOperator] = useState<string>('less');
     const [identityThreshold, setIdentityThreshold] = useState<string>('100%');
 
@@ -198,7 +197,6 @@ export default function Pipeline() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    analysisType: analysisType,
                     comparisonOperator: comparisonOperator,
                     identityThreshold: identityThreshold
                 }),
@@ -714,13 +712,11 @@ export default function Pipeline() {
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 2</Badge>
-                                <h1 className={conservancyError ? "text-red-600" : ""}>T-Cell Epitope Prediction</h1>
+                                <h1>T-Cell Epitope Prediction</h1>
                                 <Badge variant="required_badge">Required</Badge>
-                                {conservancyError && (
-                                    <Image src="/exclamation_emoji.svg" alt="Error Icon" width={16} height={16} className="flashing-error" />
-                                )}
+                                
                             </div>
-                            <h1 className={conservancyError ? "description-text-error" : "description-text"}>Predict T-Cell epitopes from the uploaded sequence</h1>
+                            <h1 className="description-text">Predict T-Cell epitopes from the uploaded sequence</h1>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -795,9 +791,12 @@ export default function Pipeline() {
                         <div className="flex flex-col gap-[8px] w-full">
                             <div className="flex flex-row items-center gap-[12px] w-full">
                                 <Badge variant="step_badge">Step 3</Badge>
-                                <h1>Epitope Conservancy Analysis</h1>
+                                <h1 className={`${conservancyError ? "text-red-600" : ""}`}>Epitope Conservancy Analysis</h1>
+                                {conservancyError && (
+                                    <Image src="/exclamation_emoji.svg" alt="Error Icon" width={16} height={16} className="flashing-error" />
+                                )}
                             </div>
-                            <h1 className="description-text">Analyse epitope conservation across variants</h1>
+                            <h1 className={conservancyError ? "description-text-error" : "description-text"}>Analyse epitope conservation across variants</h1>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -857,23 +856,6 @@ export default function Pipeline() {
                                 <Badge variant="red">Advanced</Badge>
                                 </div>
                                 <div className="flex flex-col gap-[12px] mt-[12px]">
-                                    <h2 className="parameter-heading">Analysis Type</h2>
-                                    <RadioGroup defaultValue="linear" className="flex flex-row items-center space-x-4" onValueChange={(value) => setAnalysisType(value)}>
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem
-                                            value="linear"
-                                            id="linear"
-                                            />
-                                            <Label className="input-text" htmlFor="linear">Linear</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem
-                                            value="discontinuous"
-                                            id="discontinuous"
-                                            />
-                                            <Label className="input-text" htmlFor="discontinuous">Discontinuous</Label>
-                                        </div>
-                                    </RadioGroup>
                                     <h2 className="parameter-heading mt-[8px]">Sequence Identity Threshold</h2>
                                     <div className="flex flex-row items-center gap-[8px]">
                                         <Select onValueChange={(value) => setComparisonOperator(value)}>
@@ -1314,7 +1296,7 @@ export default function Pipeline() {
             <div className="flex justify-center mt-[8px] mb-[36px]">
                 <Button className="run-button" onClick={handleSubmit} disabled={sequence.length === 0 && uploadedFiles.length === 0}>
                     <Image src="/play.svg" alt="Run Pipeline" width={16} height={16} priority />
-                    <h2 className="run-text">Run Analysis</h2>
+                    <h2 className="run-text">Run Pipeline</h2>
                 </Button>                
             </div>
             
