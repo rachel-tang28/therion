@@ -851,9 +851,15 @@ export default function ResultsPage() {
       <main className="pr-[55px] mt-[18px] gap-[18px] w-full max-h-3/5 overflow-scroll flex flex-col w-full gap-[16px] normal-box items-center justify-center">
         <div className="flex flex-col h-full">
           <h1 className="main-heading-1">Pipeline Results</h1>
-          <p className="mb-8 mt-3">
-            Generated for <span className="font-semibold">{pipelineName}</span>
-          </p>
+          <div className="flex flex-row w-full justify-between">
+            <p className="mb-8 mt-3">
+              Generated for <span className="font-semibold">{pipelineName}</span>
+            </p>
+            <Button variant="default" onClick={() => downloadResultsAsCSV(results)}>
+                <h2 className="run-text">Download Results as CSV</h2>
+            </Button>    
+          </div>
+          
           <Tabs defaultValue="summary" className="w-full">
             <TabsList className="w-full h-[80px] flex items-center justify-between bg-muted p-[8px] text-muted-foreground gap-[12px]">
               <TabsTrigger value="summary">
@@ -925,9 +931,6 @@ export default function ResultsPage() {
                   <h2 className="text-lg font-semibold mb-4 w-full justify-center flex">
                     Results Summary
                   </h2>
-                  <Button variant="default" onClick={() => downloadResultsAsCSV(results)}>
-                    <h2 className="run-text">Download Results as CSV</h2>
-                </Button>    
                 </div>
                 
                 <div className="w-full max-w-4xl">
