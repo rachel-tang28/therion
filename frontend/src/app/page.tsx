@@ -47,8 +47,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { FeedbackTab } from "@/components/feedback_tab";
-import { Toaster } from '@/components/ui/sonner';
 
 
 export default function Pipeline() {
@@ -1462,8 +1460,6 @@ export default function Pipeline() {
             </div>
             
         </main>
-        <FeedbackTab />
-        <Toaster />
         <footer className="footer_style flex mt-auto w-full">
             <Chat />
         </footer>

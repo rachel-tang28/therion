@@ -22,6 +22,8 @@ import AllergenicityTable from "@/components/ui/allergenicity_table";
 import ToxicityTable from "@/components/ui/toxicity_table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
+import { FeedbackTab } from "@/components/feedback_tab";
 
 interface ResultEntry {
   sequence: string;
@@ -1154,6 +1156,8 @@ export default function ResultsPage() {
         </div>
       </main>
       <Chat />
+      <FeedbackTab />
+      <Toaster />
       <footer className="footer_style flex mt-auto w-full"></footer>
     </div>
   );
