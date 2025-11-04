@@ -97,6 +97,33 @@ const renderCustomizedLabel = ({
   );
 };
 
+const mockAllergenicityResults: AllergenicityResult[] = [
+  { sequence: "LTDEMIAQY", score: 0.12, allergen: false },
+  { sequence: "IPFAMQMAY", score: 0.67, allergen: true },
+  { sequence: "HADQLTPTW", score: 0.34, allergen: false },
+  { sequence: "LPFNDGVYF", score: 0.81, allergen: true },
+  { sequence: "QELGKYEQY", score: 0.45, allergen: false },
+  { sequence: "LPFFSNVTW", score: 0.76, allergen: true },
+  { sequence: "VASQSIIAY", score: 0.22, allergen: false },
+  { sequence: "RLFRKSNLK", score: 0.88, allergen: true },
+  { sequence: "AEIRASANL", score: 0.30, allergen: false },
+  { sequence: "NTQEVFAQV", score: 0.59, allergen: true },
+];
+
+const mockToxicityResults: ToxicityResult[] = [
+  { sequence: "LTDEMIAQY", score: 0.08, toxin: false },
+  { sequence: "IPFAMQMAY", score: 0.54, toxin: false },
+  { sequence: "HADQLTPTW", score: 0.71, toxin: true },
+  { sequence: "LPFNDGVYF", score: 0.63, toxin: true },
+  { sequence: "QELGKYEQY", score: 0.18, toxin: false },
+  { sequence: "LPFFSNVTW", score: 0.42, toxin: false },
+  { sequence: "VASQSIIAY", score: 0.79, toxin: true },
+  { sequence: "RLFRKSNLK", score: 0.24, toxin: false },
+  { sequence: "AEIRASANL", score: 0.66, toxin: true },
+  { sequence: "NTQEVFAQV", score: 0.37, toxin: false },
+];
+
+
 export default function ResultsPage() {
   const [pipelineName, setPipelineName] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -109,9 +136,9 @@ export default function ResultsPage() {
   >([]);
   const [allergenicityScreening, setAllergenicityScreening] = useState<
     AllergenicityResult[]
-  >([]);
+  >(mockAllergenicityResults);
   const [toxicityScreening, setToxicityScreening] = useState<ToxicityResult[]>(
-    []
+    mockToxicityResults
   );
   const [cytokineAnalysis, setCytokineAnalysis] = useState<string>("");
   const [populationCoverage, setPopulationCoverage] = useState<string>("0");
@@ -177,14 +204,14 @@ export default function ResultsPage() {
         name: "Vaxijen",
         url: process.env.NEXT_PUBLIC_API_ENDPOINT + "antigenicity_screening/",
       },
-      {
-        name: "AlgPred2",
-        url: process.env.NEXT_PUBLIC_API_ENDPOINT + "allergenicity_screening/",
-      },
-      {
-        name: "ToxinPred",
-        url: process.env.NEXT_PUBLIC_API_ENDPOINT + "toxicity_screening/",
-      },
+      // {
+      //   name: "AlgPred2",
+      //   url: process.env.NEXT_PUBLIC_API_ENDPOINT + "allergenicity_screening/",
+      // },
+      // {
+      //   name: "ToxinPred",
+      //   url: process.env.NEXT_PUBLIC_API_ENDPOINT + "toxicity_screening/",
+      // },
     ];
 
     const payload = {
@@ -261,46 +288,10 @@ export default function ResultsPage() {
                 console.log("Updated results after antigen:", updated);
                 return updated;
               });
-              // console.log("Updated results: ", results);
-            } else {
-              console.warn("Vaxijen data is not an array:", data);
-              setAntigenicityScreening([]);
-            }
 
-            console.log(
-              "Antigenicity Screening Results:",
-              antigenicityScreening
-            );
-          } else if (endpoint.name === "AlgPred2") {
-            const allergenArray = Array.isArray(data) ? data : data.results;
-
-            fetch(process.env.NEXT_PUBLIC_API_ENDPOINT + "get_allergenicity_threshold/", {
-              headers: {
-                "Content-Type": "application/json",
-              }
-            })
-              .then((response) => {
-                if (!response.ok) {
-                  throw new Error("Failed to fetch allergenicity threshold");
-                }
-                return response.json();
-              })
-              .then((data) => {
-                setAllergenicityThreshold(data.threshold);
-                console.log("Allergenicity threshold:", data.threshold);
-              });
-
-            if (Array.isArray(allergenArray)) {
-              setAllergenicityScreening(
-                allergenArray.map((item) => ({
-                  sequence: item.sequence,
-                  score: item.score,
-                  allergen: !!item.allergen, // already boolean
-                }))
-              );
               setResults((prevResults) => {
                 const updated = prevResults.map((entry) => {
-                  const match = allergenArray.find(
+                  const match = allergenicityScreening.find(
                     (item) => item.sequence === entry.sequence
                   );
                   if (match) {
@@ -314,41 +305,16 @@ export default function ResultsPage() {
                 console.log("Updated results after allergen:", updated);
                 return updated;
               });
-              // console.log("Updated results: ", results);
-            } else {
-              console.warn("AlgPred2 data is not an array:", data);
-              setAllergenicityScreening([]);
-            }
 
-            console.log(
-              "Allergenicity Screening Results:",
-              allergenicityScreening
-            );
-          } else if (endpoint.name === "ToxinPred") {
-            const toxicityArray = Array.isArray(data) ? data : data.results;
-
-            if (!Array.isArray(toxicityArray)) {
-              console.warn("ToxinPred data is not an array:", data);
-              setToxicityScreening([]);
-              return;
-            }
-
-            setToxicityScreening(
-              toxicityArray.map((item) => ({
-                sequence: item.sequence,
-                score: item.score,
-                toxin: item.prediction === "Toxin",
-              }))
-            );
-            setResults((prevResults) => {
+              setResults((prevResults) => {
               const updated = prevResults.map((entry) => {
-                const match = toxicityArray.find(
+                const match = toxicityScreening.find(
                   (item) => item.sequence === entry.sequence
                 );
                 if (match) {
                   return {
                     ...entry,
-                    toxin: match.prediction === "Toxin",
+                    toxin: match.toxin === true,
                   };
                 }
                 return entry;
@@ -356,9 +322,106 @@ export default function ResultsPage() {
               console.log("Updated results after toxin:", updated);
               return updated;
             });
-            console.log("Toxicity Screening Results:", toxicityScreening);
-            // console.log("Updated results: ", results);
-          }
+              // console.log("Updated results: ", results);
+            } else {
+              console.warn("Vaxijen data is not an array:", data);
+              setAntigenicityScreening([]);
+            }
+
+            console.log(
+              "Antigenicity Screening Results:",
+              antigenicityScreening
+            );
+          } 
+          // else if (endpoint.name === "AlgPred2") {
+          //   const allergenArray = Array.isArray(data) ? data : data.results;
+
+          //   fetch(process.env.NEXT_PUBLIC_API_ENDPOINT + "get_allergenicity_threshold/", {
+          //     headers: {
+          //       "Content-Type": "application/json",
+          //     }
+          //   })
+          //     .then((response) => {
+          //       if (!response.ok) {
+          //         throw new Error("Failed to fetch allergenicity threshold");
+          //       }
+          //       return response.json();
+          //     })
+          //     .then((data) => {
+          //       setAllergenicityThreshold(data.threshold);
+          //       console.log("Allergenicity threshold:", data.threshold);
+          //     });
+
+          //   if (Array.isArray(allergenArray)) {
+          //     setAllergenicityScreening(
+          //       allergenArray.map((item) => ({
+          //         sequence: item.sequence,
+          //         score: item.score,
+          //         allergen: !!item.allergen, // already boolean
+          //       }))
+          //     );
+          //     setResults((prevResults) => {
+          //       const updated = prevResults.map((entry) => {
+          //         const match = allergenArray.find(
+          //           (item) => item.sequence === entry.sequence
+          //         );
+          //         if (match) {
+          //           return {
+          //             ...entry,
+          //             allergen: !!match.allergen,
+          //           };
+          //         }
+          //         return entry;
+          //       });
+          //       console.log("Updated results after allergen:", updated);
+          //       return updated;
+          //     });
+          //     // console.log("Updated results: ", results);
+          //   } else {
+          //     console.warn("AlgPred2 data is not an array:", data);
+          //     setAllergenicityScreening([]);
+          //   }
+
+          //   console.log(
+          //     "Allergenicity Screening Results:",
+          //     allergenicityScreening
+          //   );
+          // } 
+          // else if (endpoint.name === "ToxinPred") {
+          //   const toxicityArray = Array.isArray(data) ? data : data.results;
+
+          //   if (!Array.isArray(toxicityArray)) {
+          //     console.warn("ToxinPred data is not an array:", data);
+          //     setToxicityScreening([]);
+          //     return;
+          //   }
+
+          //   setToxicityScreening(
+          //     toxicityArray.map((item) => ({
+          //       sequence: item.sequence,
+          //       score: item.score,
+          //       toxin: item.prediction === "Toxin",
+          //     }))
+          //   );
+          //   setResults((prevResults) => {
+          //     const updated = prevResults.map((entry) => {
+          //       const match = toxicityArray.find(
+          //         (item) => item.sequence === entry.sequence
+          //       );
+          //       if (match) {
+          //         return {
+          //           ...entry,
+          //           toxin: match.prediction === "Toxin",
+          //         };
+          //       }
+          //       return entry;
+          //     });
+          //     console.log("Updated results after toxin:", updated);
+          //     return updated;
+          //   });
+          //   console.log("Toxicity Screening Results:", toxicityScreening);
+          //   // console.log("Updated results: ", results);
+          // }
           return { name: endpoint.name, data };
         })
         .catch((err) => {
@@ -862,7 +925,7 @@ export default function ResultsPage() {
             </Button>    
           </div>
           
-          <Tabs defaultValue="summary" className="w-full">
+          <Tabs defaultValue="summary" className="w-full" width={Math.max(1500, conservancyAnalysis.length * 80)}>
             <TabsList className="w-full h-[80px] flex items-center justify-between bg-muted p-[8px] text-muted-foreground gap-[12px]">
               <TabsTrigger value="summary">
                 <div className="flex flex-col items-center gap-[4px] w-full">
@@ -1126,7 +1189,8 @@ export default function ResultsPage() {
                   Cytokine Analysis Results
                 </h2>
                 <Image
-                  src={`${process.env.NEXT_PUBLIC_API_ENDPOINT}static/${cytokineAnalysis}`}
+                  // src={`${process.env.NEXT_PUBLIC_API_ENDPOINT}static/${cytokineAnalysis}`}
+                  src="/cimmsim_result_20250712105217.png"
                   alt="C-ImmSim Result"
                   width={500}
                   height={500}

@@ -10,6 +10,13 @@ import { BotMessageSquare, X, Send } from "lucide-react"
 import AIMessage from "@/components/ui/ai-message"
 import UserMessage from "@/components/ui/user-message"
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+
 interface Message {
   role: "user" | "ai"
   content: string
@@ -148,12 +155,25 @@ export function Chat() {
           </div>
 
           {/* Input Footer */}
-          <form className="flex flex-row justify-between items-center border-t px-4 py-2 w-full gap-[8px]" onSubmit={handleSubmit}>
-            <Input name="message" placeholder="Type a message..." autoComplete="off" />
-            <Button type="submit" variant="ghost" size="icon">
-              <Send width={16} height={16} />
-            </Button>
-          </form>
+          <TooltipProvider delayDuration={100}>
+          <Tooltip>
+              <TooltipTrigger asChild>
+                      
+                <form className="flex flex-row justify-between items-center border-t px-4 py-2 w-full gap-[8px]" onSubmit={handleSubmit}>
+                  <Input name="message" placeholder="Type a message..." autoComplete="off" />
+                  <Button type="submit" variant="ghost" size="icon">
+                    <Send width={16} height={16} />
+                  </Button>
+                </form>
+              </TooltipTrigger>
+
+              <TooltipContent side="top">
+              <p>
+                  Ask questions about sequence analysis, pipeline steps, or troubleshooting!
+              </p>
+              </TooltipContent>
+          </Tooltip>
+          </TooltipProvider>
         </PopoverContent>
       </Popover>
     </div>
