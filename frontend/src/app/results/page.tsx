@@ -22,8 +22,8 @@ import AllergenicityTable from "@/components/ui/allergenicity_table";
 import ToxicityTable from "@/components/ui/toxicity_table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button";
-import { Toaster } from "@/components/ui/sonner";
-import { FeedbackTab } from "@/components/feedback_tab";
+
+import PopulationTable from "@/components/ui/population_table";
 
 interface ResultEntry {
   sequence: string;
@@ -65,6 +65,13 @@ interface ToxicityResult {
   toxin: boolean;
 }
 
+interface PopulationCoverageResult {
+  population: string;
+  coverage: number;
+  average_hit: number;
+  pc90: number;
+}
+
 const COLORS = ["#63c184ff", "#df5959ff"];
 const FLIPCOLORS = ["#df5959ff", "#63c184ff"];
 
@@ -97,33 +104,6 @@ const renderCustomizedLabel = ({
   );
 };
 
-const mockAllergenicityResults: AllergenicityResult[] = [
-  { sequence: "LTDEMIAQY", score: 0.12, allergen: false },
-  { sequence: "IPFAMQMAY", score: 0.67, allergen: true },
-  { sequence: "HADQLTPTW", score: 0.34, allergen: false },
-  { sequence: "LPFNDGVYF", score: 0.81, allergen: true },
-  { sequence: "QELGKYEQY", score: 0.45, allergen: false },
-  { sequence: "LPFFSNVTW", score: 0.76, allergen: true },
-  { sequence: "VASQSIIAY", score: 0.22, allergen: false },
-  { sequence: "RLFRKSNLK", score: 0.88, allergen: true },
-  { sequence: "AEIRASANL", score: 0.30, allergen: false },
-  { sequence: "NTQEVFAQV", score: 0.59, allergen: true },
-];
-
-const mockToxicityResults: ToxicityResult[] = [
-  { sequence: "LTDEMIAQY", score: 0.08, toxin: false },
-  { sequence: "IPFAMQMAY", score: 0.54, toxin: false },
-  { sequence: "HADQLTPTW", score: 0.71, toxin: true },
-  { sequence: "LPFNDGVYF", score: 0.63, toxin: true },
-  { sequence: "QELGKYEQY", score: 0.18, toxin: false },
-  { sequence: "LPFFSNVTW", score: 0.42, toxin: false },
-  { sequence: "VASQSIIAY", score: 0.79, toxin: true },
-  { sequence: "RLFRKSNLK", score: 0.24, toxin: false },
-  { sequence: "AEIRASANL", score: 0.66, toxin: true },
-  { sequence: "NTQEVFAQV", score: 0.37, toxin: false },
-];
-
-
 export default function ResultsPage() {
   const [pipelineName, setPipelineName] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -136,12 +116,12 @@ export default function ResultsPage() {
   >([]);
   const [allergenicityScreening, setAllergenicityScreening] = useState<
     AllergenicityResult[]
-  >(mockAllergenicityResults);
+  >([]);
   const [toxicityScreening, setToxicityScreening] = useState<ToxicityResult[]>(
-    mockToxicityResults
+    []
   );
   const [cytokineAnalysis, setCytokineAnalysis] = useState<string>("");
-  const [populationCoverage, setPopulationCoverage] = useState<string>("0");
+  const [populationResults, setPopulationResults] = useState<PopulationCoverageResult[]>([]);
   const [progress, setProgress] = useState(1);
   const [currentMessage, setCurrentMessage] = useState(1);
   const [results, setResults] = useState<ResultCompleteEntry[]>([]);
@@ -204,14 +184,14 @@ export default function ResultsPage() {
         name: "Vaxijen",
         url: process.env.NEXT_PUBLIC_API_ENDPOINT + "antigenicity_screening/",
       },
-      // {
-      //   name: "AlgPred2",
-      //   url: process.env.NEXT_PUBLIC_API_ENDPOINT + "allergenicity_screening/",
-      // },
-      // {
-      //   name: "ToxinPred",
-      //   url: process.env.NEXT_PUBLIC_API_ENDPOINT + "toxicity_screening/",
-      // },
+      {
+        name: "AlgPred2",
+        url: process.env.NEXT_PUBLIC_API_ENDPOINT + "allergenicity_screening/",
+      },
+      {
+        name: "ToxinPred",
+        url: process.env.NEXT_PUBLIC_API_ENDPOINT + "toxicity_screening/",
+      },
     ];
 
     const payload = {
@@ -288,10 +268,46 @@ export default function ResultsPage() {
                 console.log("Updated results after antigen:", updated);
                 return updated;
               });
+              // console.log("Updated results: ", results);
+            } else {
+              console.warn("Vaxijen data is not an array:", data);
+              setAntigenicityScreening([]);
+            }
 
+            console.log(
+              "Antigenicity Screening Results:",
+              antigenicityScreening
+            );
+          } else if (endpoint.name === "AlgPred2") {
+            const allergenArray = Array.isArray(data) ? data : data.results;
+
+            fetch(process.env.NEXT_PUBLIC_API_ENDPOINT + "get_allergenicity_threshold/", {
+              headers: {
+                "Content-Type": "application/json",
+              }
+            })
+              .then((response) => {
+                if (!response.ok) {
+                  throw new Error("Failed to fetch allergenicity threshold");
+                }
+                return response.json();
+              })
+              .then((data) => {
+                setAllergenicityThreshold(data.threshold);
+                console.log("Allergenicity threshold:", data.threshold);
+              });
+
+            if (Array.isArray(allergenArray)) {
+              setAllergenicityScreening(
+                allergenArray.map((item) => ({
+                  sequence: item.sequence,
+                  score: item.score,
+                  allergen: !!item.allergen, // already boolean
+                }))
+              );
               setResults((prevResults) => {
                 const updated = prevResults.map((entry) => {
-                  const match = allergenicityScreening.find(
+                  const match = allergenArray.find(
                     (item) => item.sequence === entry.sequence
                   );
                   if (match) {
@@ -305,16 +321,41 @@ export default function ResultsPage() {
                 console.log("Updated results after allergen:", updated);
                 return updated;
               });
+              // console.log("Updated results: ", results);
+            } else {
+              console.warn("AlgPred2 data is not an array:", data);
+              setAllergenicityScreening([]);
+            }
 
-              setResults((prevResults) => {
+            console.log(
+              "Allergenicity Screening Results:",
+              allergenicityScreening
+            );
+          } else if (endpoint.name === "ToxinPred") {
+            const toxicityArray = Array.isArray(data) ? data : data.results;
+
+            if (!Array.isArray(toxicityArray)) {
+              console.warn("ToxinPred data is not an array:", data);
+              setToxicityScreening([]);
+              return;
+            }
+
+            setToxicityScreening(
+              toxicityArray.map((item) => ({
+                sequence: item.sequence,
+                score: item.score,
+                toxin: item.prediction === "Toxin",
+              }))
+            );
+            setResults((prevResults) => {
               const updated = prevResults.map((entry) => {
-                const match = toxicityScreening.find(
+                const match = toxicityArray.find(
                   (item) => item.sequence === entry.sequence
                 );
                 if (match) {
                   return {
                     ...entry,
-                    toxin: match.toxin === true,
+                    toxin: match.prediction === "Toxin",
                   };
                 }
                 return entry;
@@ -322,106 +363,9 @@ export default function ResultsPage() {
               console.log("Updated results after toxin:", updated);
               return updated;
             });
-              // console.log("Updated results: ", results);
-            } else {
-              console.warn("Vaxijen data is not an array:", data);
-              setAntigenicityScreening([]);
-            }
-
-            console.log(
-              "Antigenicity Screening Results:",
-              antigenicityScreening
-            );
-          } 
-          // else if (endpoint.name === "AlgPred2") {
-          //   const allergenArray = Array.isArray(data) ? data : data.results;
-
-          //   fetch(process.env.NEXT_PUBLIC_API_ENDPOINT + "get_allergenicity_threshold/", {
-          //     headers: {
-          //       "Content-Type": "application/json",
-          //     }
-          //   })
-          //     .then((response) => {
-          //       if (!response.ok) {
-          //         throw new Error("Failed to fetch allergenicity threshold");
-          //       }
-          //       return response.json();
-          //     })
-          //     .then((data) => {
-          //       setAllergenicityThreshold(data.threshold);
-          //       console.log("Allergenicity threshold:", data.threshold);
-          //     });
-
-          //   if (Array.isArray(allergenArray)) {
-          //     setAllergenicityScreening(
-          //       allergenArray.map((item) => ({
-          //         sequence: item.sequence,
-          //         score: item.score,
-          //         allergen: !!item.allergen, // already boolean
-          //       }))
-          //     );
-          //     setResults((prevResults) => {
-          //       const updated = prevResults.map((entry) => {
-          //         const match = allergenArray.find(
-          //           (item) => item.sequence === entry.sequence
-          //         );
-          //         if (match) {
-          //           return {
-          //             ...entry,
-          //             allergen: !!match.allergen,
-          //           };
-          //         }
-          //         return entry;
-          //       });
-          //       console.log("Updated results after allergen:", updated);
-          //       return updated;
-          //     });
-          //     // console.log("Updated results: ", results);
-          //   } else {
-          //     console.warn("AlgPred2 data is not an array:", data);
-          //     setAllergenicityScreening([]);
-          //   }
-
-          //   console.log(
-          //     "Allergenicity Screening Results:",
-          //     allergenicityScreening
-          //   );
-          // } 
-          // else if (endpoint.name === "ToxinPred") {
-          //   const toxicityArray = Array.isArray(data) ? data : data.results;
-
-          //   if (!Array.isArray(toxicityArray)) {
-          //     console.warn("ToxinPred data is not an array:", data);
-          //     setToxicityScreening([]);
-          //     return;
-          //   }
-
-          //   setToxicityScreening(
-          //     toxicityArray.map((item) => ({
-          //       sequence: item.sequence,
-          //       score: item.score,
-          //       toxin: item.prediction === "Toxin",
-          //     }))
-          //   );
-          //   setResults((prevResults) => {
-          //     const updated = prevResults.map((entry) => {
-          //       const match = toxicityArray.find(
-          //         (item) => item.sequence === entry.sequence
-          //       );
-          //       if (match) {
-          //         return {
-          //           ...entry,
-          //           toxin: match.prediction === "Toxin",
-          //         };
-          //       }
-          //       return entry;
-          //     });
-          //     console.log("Updated results after toxin:", updated);
-          //     return updated;
-          //   });
-          //   console.log("Toxicity Screening Results:", toxicityScreening);
-          //   // console.log("Updated results: ", results);
-          // }
+            console.log("Toxicity Screening Results:", toxicityScreening);
+            // console.log("Updated results: ", results);
+          }
           return { name: endpoint.name, data };
         })
         .catch((err) => {
@@ -656,10 +600,12 @@ export default function ResultsPage() {
           throw new Error(`Error: ${response.status}`);
         }
 
-        const result = await response.json();
+        const result: PopulationCoverageResult[] = await response.json();
         console.log("Population coverage results:", result);
-        if (progress + 20 <= 100 && populationCoverage === "0") {
-          setPopulationCoverage(result.coverage);
+        
+        console.log("Population coverage results:", result);
+        if (progress + 20 <= 100 && populationResults.length === 0) {
+          setPopulationResults(result);
           setProgress((prev) => prev + 20);
           setCurrentMessage((prev) => (prev + 1) % messages.length);
         }
@@ -925,7 +871,7 @@ export default function ResultsPage() {
             </Button>    
           </div>
           
-          <Tabs defaultValue="summary" className="w-full" width={Math.max(1500, conservancyAnalysis.length * 80)}>
+          <Tabs defaultValue="summary" className="width={Math.max(1500, conservancyAnalysis.length * 80)}">
             <TabsList className="w-full h-[80px] flex items-center justify-between bg-muted p-[8px] text-muted-foreground gap-[12px]">
               <TabsTrigger value="summary">
                 <div className="flex flex-col items-center gap-[4px] w-full">
@@ -1189,8 +1135,7 @@ export default function ResultsPage() {
                   Cytokine Analysis Results
                 </h2>
                 <Image
-                  // src={`${process.env.NEXT_PUBLIC_API_ENDPOINT}static/${cytokineAnalysis}`}
-                  src="/cimmsim_result_20250712105217.png"
+                  src={`${process.env.NEXT_PUBLIC_API_ENDPOINT}static/${cytokineAnalysis}`}
                   alt="C-ImmSim Result"
                   width={500}
                   height={500}
@@ -1207,12 +1152,12 @@ export default function ResultsPage() {
                     </AlertTitle>
                   </Alert>
                 </div>
-                <h2 className="text-lg font-semibold mb-4">
+                <h2 className="text-lg font-semibold mb-1">
                   Population Coverage Results
                 </h2>
-                <div className="flex flex-col items-center justify-center w-full h-full">
-                  <h3>World Coverage: </h3>
-                  <p className="text-2xl font-bold">{populationCoverage}%</p>
+                <h3 className="mt-0 font-light italic">This is the percentage of people in each region who are likely to respond to at least one of the top 10 peptides.</h3>
+                <div className="flex flex-col items-center justify-center w-full h-full mt-[12px]">
+                  <PopulationTable data={populationResults} />
                 </div>
               </div>
             </TabsContent>
@@ -1220,8 +1165,6 @@ export default function ResultsPage() {
         </div>
       </main>
       <Chat />
-      <FeedbackTab />
-      <Toaster />
       <footer className="footer_style flex mt-auto w-full"></footer>
     </div>
   );
