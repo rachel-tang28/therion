@@ -60,7 +60,7 @@ Contains the client-facing interface and all UI logic.
 
 ## Setting Up the Codebase Locally
 
-**Prerequisite:** Ensure Node.js (v18.17 or higher) and Python are installed.
+**Prerequisite:** Ensure Node.js (v18.17 or higher) and Python (v3.10) are installed.
 
 ### 1. Clone the repository
 
