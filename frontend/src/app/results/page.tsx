@@ -22,6 +22,8 @@ import AllergenicityTable from "@/components/ui/allergenicity_table";
 import ToxicityTable from "@/components/ui/toxicity_table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
+import { FeedbackTab } from "@/components/feedback_tab";
 
 import PopulationTable from "@/components/ui/population_table";
 
@@ -870,8 +872,8 @@ export default function ResultsPage() {
                 <h2 className="run-text">Download Results as CSV</h2>
             </Button>    
           </div>
-          
           <Tabs defaultValue="summary" className="width={Math.max(1500, conservancyAnalysis.length * 80)}">
+          
             <TabsList className="w-full h-[80px] flex items-center justify-between bg-muted p-[8px] text-muted-foreground gap-[12px]">
               <TabsTrigger value="summary">
                 <div className="flex flex-col items-center gap-[4px] w-full">
@@ -1165,6 +1167,8 @@ export default function ResultsPage() {
         </div>
       </main>
       <Chat />
+      <FeedbackTab />
+      <Toaster />
       <footer className="footer_style flex mt-auto w-full"></footer>
     </div>
   );

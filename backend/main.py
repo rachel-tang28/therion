@@ -347,11 +347,37 @@ async def epitope_prediction(request: EpitopePredictionRequest):
     """
     Function for epitope prediction via. IEDB Script.
     """
-    # Here you would call your epitope prediction logic
-    # print("Received epitope prediction request:")
+    print("Received epitope prediction request:")
     output, hla_alleles = IEDB_epitope_prediction(global_sequence, request.alleles, global_selections)
-    # print("Output from IEDB:", output)
-    # print("HLA Alleles from IEDB:", hla_alleles)
+    print("Output from IEDB:", output)
+    print("HLA Alleles from IEDB:", hla_alleles)
+    # # Create dummy output
+    # output = [
+    #     {"sequence": "LTDEMIAQY", "weighted_score": 9.97, "allele": "HLA-A*01:01"},
+    #     {"sequence": "IPFAMQMAY", "weighted_score": 8.95, "allele": "HLA-B*35:01"},
+    #     {"sequence": "HADQLTPTW", "weighted_score": 7.92, "allele": "HLA-B*58:01"},
+    #     {"sequence": "LPFNDGVYF", "weighted_score": 6.89, "allele": "HLA-B*35:01"},
+    #     {"sequence": "QELGKYEQY", "weighted_score": 5.91, "allele": "HLA-B*44:03"},
+    #     {"sequence": "LPFFSNVTW", "weighted_score": 4.91, "allele": "HLA-B*53:01"},
+    #     {"sequence": "VASQSIIAY", "weighted_score": 3.92, "allele": "HLA-B*35:01"},
+    #     {"sequence": "RLFRKSNLK", "weighted_score": 2.94, "allele": "HLA-A*03:01"},
+    #     {"sequence": "AEIRASANL", "weighted_score": 1.95, "allele": "HLA-B*40:01"},
+    #     {"sequence": "NTQEVFAQV", "weighted_score": 0.98,  "allele": "HLA-A*68:02"}
+    # ]
+
+    # hla_alleles = [
+    #     {"sequence": "LTDEMIAQY", "alleles": ["HLA-A*01:01"]},
+    #     {"sequence": "IPFAMQMAY", "alleles": ["HLA-B*35:01"]},
+    #     {"sequence": "HADQLTPTW", "alleles": ["HLA-B*58:01"]},
+    #     {"sequence": "LPFNDGVYF", "alleles": ["HLA-B*35:01"]},
+    #     {"sequence": "QELGKYEQY", "alleles": ["HLA-B*44:03"]},
+    #     {"sequence": "LPFFSNVTW", "alleles": ["HLA-B*53:01"]},
+    #     {"sequence": "VASQSIIAY", "alleles": ["HLA-B*35:01"]},
+    #     {"sequence": "RLFRKSNLK", "alleles": ["HLA-A*03:01"]},
+    #     {"sequence": "AEIRASANL", "alleles": ["HLA-B*40:01"]},
+    #     {"sequence": "NTQEVFAQV", "alleles": ["HLA-A*68:02"]}
+    # ]
+
     global global_results
     global_results["epitope_prediction"] = output
     global global_sequence_and_alleles

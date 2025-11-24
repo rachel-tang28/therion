@@ -34,7 +34,7 @@ def get_population_coverage(epitope_and_alleles: List[dict]):
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
 
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome() 
 
     # Remove navigator.webdriver to help avoid detection
     driver.execute_cdp_cmd(
@@ -133,7 +133,8 @@ def get_population_coverage(epitope_and_alleles: List[dict]):
 
             hla_cell.clear()
             # Send corresponding index of allele in allele list
-            hla_cell.send_keys(hla_alleles[idx - 1])
+            hla_cell.send_keys(", ".join(hla_alleles))
+
             # time.sleep(1) 
 
         print("✅ All epitopes and HLA alleles entered!")
