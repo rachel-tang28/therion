@@ -11,7 +11,7 @@ export default function RoundIcon(data: RoundIconProps) {
       <div className="relative w-4 h-4">
         <Image
           src={data.imageSrc}
-          alt="Profile"
+          alt="Icon"
           fill
           style={{ objectFit: "contain" }}
         />

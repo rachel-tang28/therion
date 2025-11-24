@@ -42,7 +42,6 @@ export function Chat() {
   const fetchMessages = async () => {
     try {
           const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'chat_messages/';
-          console.log("Endpoint: ", endpoint);
           const response = await fetch(endpoint, {
               method: "GET",
               headers: {
@@ -75,12 +74,10 @@ export function Chat() {
     // Add user message to state
     setMessages((prev) => [...prev, { role: "user", content: messageContent }])
     input.value = ""
-    console.log("Messages:", messages)
 
     // Send message to backend
     try {
       const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'chat_messages/';
-      console.log("Endpoint: ", endpoint);
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -92,7 +89,6 @@ export function Chat() {
 
       if (response.ok) {
         const data = await response.json()
-        console.log("Response from AI:", data)
         setMessages((prev) => [...prev, { role: "ai", content: data.response }])
         fetchMessages() // Refresh messages after sending
         setLoading(false)
@@ -139,8 +135,6 @@ export function Chat() {
           </div>
 
           <div className="flex-1 overflow-y-scroll p-4 space-y-2 w-full">
-            {/* <AIMessage message="Hello! How can I help you today?" />
-            <UserMessage message="Can you tell me about the latest research in AI?" /> */}
             {messages.map((message, index) => (
               message.role === "ai" ? (
                 <AIMessage key={index} message={message.content} />

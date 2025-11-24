@@ -20,8 +20,7 @@ interface ResultCompleteEntry {
   rank: number;
 }
 
-// Only map 10 results to the table
-// This is to ensure that the table does not overflow
+// Only map 10 results to the table to ensure that the table does not overflow
 export default function ResultsCompleteTable({ data }: { data: ResultCompleteEntry[] }) {
   return (
     <div className="w-full max-w-4xl">
