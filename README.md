@@ -108,15 +108,8 @@ $ pip3 install -r requirements.txt
 
 ### 6. Run the backend server
 
-For Windows users:
-
 ```bash
-$ python main.py
-```
-
-For Mac users:
-```bash
-$ python3 main.py
+$ fastapi dev main.py
 ```
 
 ### 7. Now, on another terminal, switch directories into the `frontend/` folder.
@@ -159,12 +152,12 @@ Click **Create API Key**, give it a name (e.g., *Therion*), and copy the generat
 
 ### 3. Create your local `.env` file
 
-Inside the `backend/` directory, there is a template file named `.env.example`
+Inside the `backend/` directory, there is a template file named `.env.template`
 
 Make a copy of it:
 
 ```bash
-$ cp .env.example .env
+$ cp .env.template .env
 ```
 
 ### 4. Add your API key to the `.env` file
