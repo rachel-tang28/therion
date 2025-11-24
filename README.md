@@ -31,7 +31,6 @@ The Therion Platform consists of two major components: the backend (FastAPI) and
 
 Contains server-side logic including API endpoints and pipeline processing.
 
-- `c_uploads/` — Conservancy analysis output files  
 - `example_inputs/` — Sample sequence inputs  
 - `step1_epitope_prediction/` — Step 1 implementation  
 - `step2_conservancy_analysis/` — Step 2 implementation  
@@ -40,7 +39,6 @@ Contains server-side logic including API endpoints and pipeline processing.
 - `step5_toxicity_screening/` — Step 5 implementation  
 - `step6_cytokine_analysis/` — Step 6 implementation  
 - `step7_population_coverage/` — Step 7 implementation  
-- `uploads/` — User-uploaded sequence files  
 - `main.py` — Main FastAPI application
 
 ### Frontend (`frontend/`)
