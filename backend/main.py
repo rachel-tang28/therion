@@ -102,8 +102,6 @@ async def pipeline_name(request: NameRequest):
     Handles the pipeline name.
     Returns a message indicating the pipeline name.
     """
-    print("Received request for pipeline name.")
-    
     global global_pipeline_name
     if not request.name:
         global_pipeline_name = "Pipeline"
@@ -116,7 +114,6 @@ async def get_pipeline_name():
     """
     Returns the current pipeline name.
     """
-    print("Current pipeline name:", global_pipeline_name)
     return {"pipeline_name": global_pipeline_name}
 
 class StepRequest(BaseModel):
@@ -128,7 +125,6 @@ async def upload_steps(request: StepRequest):
     Handles the steps upload.
     Returns a message indicating the steps have been uploaded.
     """
-    print("Received steps:", request.activeSteps)
     global global_steps
     global_steps = request.activeSteps
     return {"message": f"Steps set to {global_steps}"}
@@ -138,7 +134,6 @@ async def get_steps():
     """
     Returns the current steps.
     """
-    print("Current steps:", global_steps)
     return {"steps": global_steps}
 
 ### NEW
@@ -152,7 +147,6 @@ async def upload_conservancy_parameters(request: ConservancyParameters):
     Handles the conservancy parameters upload.
     Returns a message indicating the conservancy parameters have been uploaded.
     """
-    print("Received conservancy parameters:", request.comparisonOperator, request.identityThreshold)
     global global_conservancy_parameters
     global_conservancy_parameters = {
         "comparisonOperator": request.comparisonOperator,
@@ -165,7 +159,6 @@ async def get_conservancy_parameters():
     """
     Returns the current conservancy parameters.
     """
-    print("Current conservancy parameters:", global_conservancy_parameters)
     return {"conservancy_parameters": global_conservancy_parameters}
 
 ### END NEW
@@ -179,7 +172,6 @@ async def upload_threshold(request: ThresholdRequest):
     Handles the threshold upload.
     Returns a message indicating the threshold value.
     """
-    print("Received threshold:", request.threshold)
     global global_threshold
     global_threshold = request.threshold
     return {"message": f"Threshold set to {global_threshold}"}
@@ -189,7 +181,6 @@ async def get_threshold():
     """
     Returns the current threshold value.
     """
-    print("Current threshold:", global_threshold)
     return {"threshold": global_threshold}
 
 @app.post("/upload_allergenicity_threshold/")
@@ -198,7 +189,6 @@ async def upload_allergenicity_threshold(request: ThresholdRequest):
     Handles the threshold upload.
     Returns a message indicating the threshold value.
     """
-    print("Received threshold:", request.threshold)
     global global_allergenicity_threshold
     global_allergenicity_threshold = request.threshold
     return {"message": f"Allergenicity threshold set to {global_allergenicity_threshold}"}
@@ -208,7 +198,6 @@ async def get_allergenicity_threshold():
     """
     Returns the current allergenicity threshold value.
     """
-    print("Current allergenicity threshold:", global_allergenicity_threshold)
     return {"threshold": global_allergenicity_threshold}
 
 class SelectionsRequest(BaseModel):
@@ -220,7 +209,6 @@ async def upload_selections(request: SelectionsRequest):
     Handles the upload of selected alleles.
     Returns the uploaded selections.
     """
-    print("Received selections:", request.selections)
     global global_selections
     global_selections = request.selections
     return {"selections": global_selections}
@@ -231,8 +219,7 @@ async def get_upload_selections():
     Returns the uploaded selections.
     """
     # Returns as a string, seperated by commas
-    print("Current selections:", global_selections)
-    return {"selections": ", ".join(global_selections)}
+    return {"selections": global_selections}
 
 @app.post("/upload_file/")
 async def create_upload_file(file_uploads: list[UploadFile], request: Request):
@@ -244,13 +231,11 @@ async def create_upload_file(file_uploads: list[UploadFile], request: Request):
     filenames = []
     for file_upload in file_uploads:
         data = await file_upload.read()
-        print(f"Sequence from file {data}")
         # Convert into FASTA format string
         fasta_sequence = f"{data.decode('utf-8')}"
         # Store the sequence in the global variable
         global global_sequence
         global_sequence = fasta_sequence
-        print(f"FASTA Sequence: {fasta_sequence}")
         save_to = os.path.join(UPLOAD_FOLDER, file_upload.filename)
         with open(save_to, 'wb') as f:
             f.write(data)
@@ -267,7 +252,6 @@ async def upload_sequence(request: SequenceUpload):
     Handles sequence uploads.
     Returns the uploaded sequence.
     """
-    print("Received sequence:", request.sequence)
     global global_sequence
     global_sequence = request.sequence
     return {"sequence": request.sequence}
@@ -326,7 +310,6 @@ async def upload_alleles(request: AlleleUpload):
     Handles allele uploads.
     Returns the uploaded alleles.
     """
-    print("Received alleles:", request.alleles)
     global global_alleles
     global_alleles = request.alleles
     return {"alleles": request.alleles}
@@ -340,10 +323,7 @@ async def epitope_prediction(request: EpitopePredictionRequest):
     """
     Function for epitope prediction via. IEDB Script.
     """
-    print("Received epitope prediction request:")
     output, hla_alleles = IEDB_epitope_prediction(global_sequence, request.alleles, global_selections)
-    print("Output from IEDB:", output)
-    print("HLA Alleles from IEDB:", hla_alleles)
 
     global global_results
     global_results["epitope_prediction"] = output
@@ -362,7 +342,6 @@ async def conservancy_analysis(request: ConservancyAnalysisRequest):
     result = IEDB_conservancy_analysis(request.peptides,
                                        global_conservancy_parameters["comparisonOperator"], 
                                        global_conservancy_parameters["identityThreshold"])
-    print("Conservancy Analysis Result:", result)
     # Extract seuences and conservation scores
     cleaned_results = []
     for row in result["results"]:
@@ -373,10 +352,8 @@ async def conservancy_analysis(request: ConservancyAnalysisRequest):
             "sequence": sequence,
             "conservation_score": conservation_score
         })
-    print("Cleaned Conservancy Results:", cleaned_results)
     global global_results
     global_results["conservancy_analysis"] = cleaned_results
-    print("Global Conservancy Results updated:", global_results["conservancy_analysis"])
     return cleaned_results
 
 class AntigenicityRequest(BaseModel):
@@ -396,14 +373,11 @@ async def antigenicity_screening(request: AntigenicityRequest):
     # 3. Run Vaxijen function
     result_df = Vaxijen(df, threshold=global_threshold, target='virus')
 
-    # 4. Optionally save results
+    # Save results
     result_df.to_csv("vaxijen_results.csv", index=False)
-    print("Antigenicity Screening Results:", result_df)
-    print("Antigenicity Screening Results in DICT:", result_df.to_dict(orient="records"))
     # 5. Return results as JSON
     global global_results
     global_results["antigenicity_screening"] = result_df.to_dict(orient="records")
-    print("Global Antigenicity Results updated:", global_results["antigenicity_screening"])
     return result_df.to_dict(orient="records")
 
 @app.post("/allergenicity_screening/")
@@ -412,14 +386,11 @@ async def allergenicity_screening(request: AntigenicityRequest):
     Allergenicity screening via AllerTOP and AlgPred2
     """
     # Run AlgPred2
-    print("Received allergenicity screening request with peptides:", request.peptides)
     algpred2_results = AlgPred2(request.peptides, global_allergenicity_threshold)
 
     # Extract the sequence name and prediction from AlgPred2 results
-    print("AlgPred2 Results:", algpred2_results)
     global global_results
     global_results["allergenicity_screening"] = algpred2_results["results"]
-    print("Global Allergenicity Results updated:", global_results["allergenicity_screening"])
 
     return algpred2_results
 
@@ -428,13 +399,9 @@ async def toxicity_screening(request: AntigenicityRequest):
     """
     Toxicity screening via ToxinPred
     """
-    # Placeholder for ToxinPred logic
-    print("Received toxicity screening request with peptides:", request.peptides)
     toxinpred_results = ToxinPred(request.peptides)
-    print("ToxinPred Results:", toxinpred_results["results"])
     global global_results
     global_results["toxicity_screening"] = toxinpred_results["results"]
-    print("Global Toxicity Results updated:", global_results["toxicity_screening"])
     return toxinpred_results
 
 @app.post("/cytokine_analysis/")
@@ -442,11 +409,8 @@ async def cytokine_analysis():
     """
     Cytokine analysis via C-ImmSim
     """
-
-    print("Received cytokine analysis request with sequence:", global_sequence)
     # Call the C-ImmSim function with the provided sequence
     result = CImmSim(global_sequence)
-    print("C-ImmSim Result:", result)
     return result
 
 class PopCovRequest(BaseModel):
@@ -458,15 +422,10 @@ async def population_coverage(request: PopCovRequest):
     """
     Population coverage via IEDB
     """
-    print("Received population coverage request with epitopes:", request.peptides)
-    print("Received HLA alleles:", request.alleles)
-
     # Call the get_population_coverage function with the provided epitopes and HLA alleles
     result = get_population_coverage(global_sequence_and_alleles)
-    print("Population Coverage Result:", result)
     global global_results
     global_results["population_coverage"] = result
-    print("Global Population Coverage Results updated:", global_results["population_coverage"])
     return result
 
 @app.get("/static/{filename}")
@@ -487,7 +446,7 @@ def generate_system_context():
     def shorten(seq): return seq[:100] + '...' if seq and len(seq) > 100 else (seq or "None")
 
     context = f"""
-    You are Thio, an AI assistant embedded in Therion — a bioinformatics platform for in-silico vaccine design...
+    You are Thio, an AI assistant embedded in Therion — a bioinformatics platform for in-silico vaccine design. You help users navigate and interpret a multi-step epitope prediction and vaccine development pipeline.
 
     Current known context:
     - Uploaded sequence: {shorten(global_sequence)}
@@ -499,6 +458,24 @@ def generate_system_context():
     - Allergenicity screening: {global_results['allergenicity_screening']}
     - Toxicity screening: {global_results['toxicity_screening']}
     - Population coverage: {(global_results['population_coverage'])}
+
+    Therion aims to make vaccine design more accessible, accurate, and efficient through centralisation, consensus prediction, and AI-powered interpretation. It integrates various immunoinformatics tools into one intuitive workflow and provides real-time assistance at each step.
+
+    The typical pipeline includes:
+    1. **Sequence Retrieval** – from viral databases.
+    2. **Epitope Prediction** – identifying CTL epitopes likely to bind MHC-I.
+    3. **Conservancy Analysis** – selecting epitopes conserved across viral strains.
+    4. **Antigenicity, Allergenicity, Toxicity Screening** – ensuring safety and immunogenicity.
+    5. **Cytokine Profiling** – predicting immune response activation.
+    6. **Population Coverage** – assessing HLA allele coverage.
+    7. **Vaccine Construct Design** – multi-epitope construction and 3D structure modelling.
+    8. **Docking & Simulation** – binding affinity and biological stability checks.
+    9. **Codon Optimisation & In-Silico Cloning** – preparing for lab expression.
+
+    Therion focuses on the first six computational steps of this vaccine design pipeline.
+
+    Guide the user based on these steps and the inputs above. Provide clear, biologically relevant explanations and assist both technical and non-technical users in interpreting results and selecting next actions.
+    
     """.strip()
 
     return context
@@ -518,33 +495,7 @@ async def post_chat_messages(request: Message):
     messages.append(Message(role="user", content=request.content))
     api_messages = []
 
-    # system_context = f"""
-    # You are Thio, an AI assistant embedded in Therion — a bioinformatics platform for in-silico vaccine design. You help users navigate and interpret a multi-step epitope prediction and vaccine development pipeline.
-
-    # Current known context:
-    # - Uploaded sequence: {global_sequence[:100] + '...' if len(global_sequence) > 100 else global_sequence or 'None'}
-    # - Conservancy sequence: {global_conservancy_sequence[:100] + '...' if len(global_conservancy_sequence) > 100 else global_conservancy_sequence or 'None'}
-    # - Selected HLA alleles: {', '.join(global_alleles) if global_alleles else 'None'}
-
-    # Therion aims to make vaccine design more accessible, accurate, and efficient through centralisation, consensus prediction, and AI-powered interpretation. It integrates various immunoinformatics tools into one intuitive workflow and provides real-time assistance at each step.
-
-    # The typical pipeline includes:
-    # 1. **Sequence Retrieval** – from viral databases.
-    # 2. **Epitope Prediction** – identifying CTL epitopes likely to bind MHC-I.
-    # 3. **Conservancy Analysis** – selecting epitopes conserved across viral strains.
-    # 4. **Antigenicity, Allergenicity, Toxicity Screening** – ensuring safety and immunogenicity.
-    # 5. **Cytokine Profiling** – predicting immune response activation.
-    # 6. **Population Coverage** – assessing HLA allele coverage.
-    # 7. **Vaccine Construct Design** – multi-epitope construction and 3D structure modelling.
-    # 8. **Docking & Simulation** – binding affinity and biological stability checks.
-    # 9. **Codon Optimisation & In-Silico Cloning** – preparing for lab expression.
-
-    # Therion focuses on the first six computational steps of this vaccine design pipeline.
-
-    # Guide the user based on these steps and the inputs above. Provide clear, biologically relevant explanations and assist both technical and non-technical users in interpreting results and selecting next actions.
-    # """.strip()
     system_context = generate_system_context()
-    print("System Context:", system_context)
 
     api_messages.append({
         "role": "system",
@@ -560,7 +511,6 @@ async def post_chat_messages(request: Message):
         messages=api_messages,
         model="llama-3.3-70b-versatile",
     )
-    print(chat_completion.choices[0].message.content)
     messages.append(Message(role="ai", content=chat_completion.choices[0].message.content))
     return {"message": "Message added successfully."}
 

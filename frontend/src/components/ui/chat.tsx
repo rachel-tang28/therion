@@ -27,6 +27,8 @@ export function Chat() {
   const [messages, setMessages] = useState<Message[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(false)
+  const [inputValue, setInputValue] = useState("");
+
 
   // Retrieve messages from backend
   useEffect(() => {
@@ -65,15 +67,15 @@ export function Chat() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const input = event.currentTarget.elements.namedItem("message") as HTMLInputElement
-    const messageContent = input.value.trim()
+    const messageContent = inputValue.trim();
+
 
     if (!messageContent) return
     setLoading(true)
 
     // Add user message to state
     setMessages((prev) => [...prev, { role: "user", content: messageContent }])
-    input.value = ""
+    setInputValue("");
 
     // Send message to backend
     try {
@@ -154,7 +156,13 @@ export function Chat() {
               <TooltipTrigger asChild>
                       
                 <form className="flex flex-row justify-between items-center border-t px-4 py-2 w-full gap-[8px]" onSubmit={handleSubmit}>
-                  <Input name="message" placeholder="Type a message..." autoComplete="off" />
+                  <Input
+                    name="message"
+                    placeholder="Type a message..."
+                    autoComplete="off"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                  />
                   <Button type="submit" variant="ghost" size="icon">
                     <Send width={16} height={16} />
                   </Button>

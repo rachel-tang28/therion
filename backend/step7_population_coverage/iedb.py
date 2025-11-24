@@ -20,7 +20,7 @@ def get_population_coverage(epitope_and_alleles: List[dict]):
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
 
-    driver = webdriver.Chrome() 
+    driver = webdriver.Chrome(options=options) 
 
     # Remove navigator.webdriver to help avoid detection
     driver.execute_cdp_cmd(

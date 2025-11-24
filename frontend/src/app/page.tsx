@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, act } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUpload } from "@/components/ui/file-upload";
@@ -119,7 +119,7 @@ export default function Pipeline() {
 
     try {
       const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + "upload_steps/";
-      const response = await fetch(endpoint, {
+      await fetch(endpoint, {
         method: "POST",
         headers: {
           "X-API-KEY": process.env.NEXT_PUBLIC_API_KEY || "",
@@ -156,7 +156,7 @@ export default function Pipeline() {
         const endpoint =
           process.env.NEXT_PUBLIC_API_ENDPOINT +
           "upload_conservancy_parameters/";
-        const response = await fetch(endpoint, {
+        await fetch(endpoint, {
           method: "POST",
           headers: {
             "X-API-KEY": process.env.NEXT_PUBLIC_API_KEY || "",
