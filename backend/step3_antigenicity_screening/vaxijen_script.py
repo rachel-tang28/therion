@@ -1,19 +1,13 @@
 #Packages
-import os
-import subprocess
-import numpy as np
 import pandas as pd
 import time
 import re
-from bs4 import BeautifulSoup
-from pprint import pprint
 from urllib.parse import urljoin
-import webbrowser
-import sys
 from requests_html import HTMLSession
 from requests.exceptions import ReadTimeout
 
-
+# Adapted from: VaccineDesigner (BiolApps)
+# Source: https://github.com/BiolApps/VaccineDesigner
 def Vaxijen_fnc(protein_seq, threshold, target='virus'):
     success=False
     #Vaxijen URLs
@@ -26,7 +20,6 @@ def Vaxijen_fnc(protein_seq, threshold, target='virus'):
     our_data={'uploaded_file': '', 'Verbose': '', 'SequenceOnOff': '', 'SummaryMode': '', 'threshold': str(threshold), 'reset': '', 'Target': target, 'seq':seq}
     while not success:
         try:
-        # pprint(data)
             session=HTMLSession()
             res = session.post(url, data=our_data,timeout=20)
             ##Vaxijen results text
@@ -59,7 +52,6 @@ def Vaxijen(df, threshold, target='virus'):
     pred_score=[]
     antigen=[]
     for k in seqs:
-        print(f"Processing sequence: {k}")
         temp=Vaxijen_fnc(k,threshold,target)
         pred_score.append(temp['prediction_score'])
         antigen.append(bool(temp['ANTIGEN']))

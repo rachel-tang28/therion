@@ -7,8 +7,6 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import Select
 
-
-
 def AlgPred2(peptide_list: list[str], threshold_value: float):
     options = Options()
     options.add_argument("--headless=new")
@@ -30,8 +28,6 @@ def AlgPred2(peptide_list: list[str], threshold_value: float):
         for i, seq in enumerate(peptide_list, 1):
             fasta_input += f">seq{i}\n{seq}\n"
 
-        print("Submitting FASTA formatted peptides:\n", fasta_input)
-
         driver.get("https://webs.iiitd.edu.in/raghava/algpred2/batch.html")
 
         # Wait for textarea to be present and input sequences
@@ -41,15 +37,9 @@ def AlgPred2(peptide_list: list[str], threshold_value: float):
         seq_box.clear()
         seq_box.send_keys(fasta_input)
 
-        # If there's a method dropdown to select, uncomment and adjust if needed
-        # from selenium.webdriver.support.ui import Select
-        # method_dropdown = Select(driver.find_element(By.NAME, "method"))
-        # method_dropdown.select_by_visible_text("SVM + Motif")  # or whichever method you want
         # Threshold input if needed
         threshold_dropdown = Select(driver.find_element(By.NAME, "svm_th"))
         threshold_dropdown.select_by_value(str(threshold_value))
-        print(f"Selected threshold: {threshold_value}")
-
 
         # Click the submit button (input type submit)
         submit_button = driver.find_element(By.XPATH, '//input[@type="submit" and @value="Submit"]')
@@ -60,29 +50,14 @@ def AlgPred2(peptide_list: list[str], threshold_value: float):
             EC.presence_of_element_located((By.XPATH, "//table"))
         )
 
-        result_table = driver.find_element(By.XPATH, "//table").text
-        # Result table has 'seq' followed by a number, score, and allergen status
-        # E.g. ['seq1', '0.27', 'Non-Allergen']
-        # ['seq2', '0.38', 'Allergen']
-        # ['seq3', '0.37', 'Allergen']
-        # ['seq4', '0.33', 'Allergen']
-        # ['seq5', '0.38', 'Allergen']
-        # ['seq6', '0.35', 'Allergen']
-        # ['seq7', '0.34', 'Allergen']
-        # ['seq8', '0.3', 'Non-Allergen']
-        # ['seq9', '0.3', 'Non-Allergen']
-        # ['seq10', '0.4', 'Allergen']
-        print("\nAlgPred2 Batch Results:\n", result_table)
-
         results = []
 
-        # Optionally print parsed rows and cells
+        # Parse rows and cells
         rows = driver.find_elements(By.XPATH, "//table//tr")
         for row in rows:
             cells = row.find_elements(By.TAG_NAME, "td")
             if len(cells) >= 6:
                 cell_texts = [cells[0].text, cells[4].text, cells[5].text]
-                print(cell_texts)
                 seq_num = int(cell_texts[0].replace("seq", "")) - 1
                 sequence = peptide_list[seq_num]
                 score = float(cell_texts[1])
@@ -91,19 +66,7 @@ def AlgPred2(peptide_list: list[str], threshold_value: float):
                     "score": score,
                     "allergen": cell_texts[2] == "Allergen"
                 })
-        print("\nParsed Results: ", results)
         return {"results": results}
     
     finally:
         driver.quit()
-
-if __name__ == "__main__":
-    # Example test peptides
-    test_peptides = [
-        "MKTIIALSYIFCLVFADYKDDDDK",
-        "GILGFVFTL",
-        "LLFGYPVYV"
-    ]
-    print("Running AlgPred2 with test peptides:", test_peptides)
-    result = AlgPred2(test_peptides)
-    print("\nFinal returned result:\n", result)

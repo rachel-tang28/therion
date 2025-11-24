@@ -29,15 +29,11 @@ def ToxinPred(peptide_list: list[str]):
         for i, pep in enumerate(peptide_list, 1):
             fasta_input += f">seq{i}\n{pep}\n"
 
-        print("Submitting FASTA formatted peptides:\n", fasta_input)
 
         seq_box = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.NAME, "seq"))
         )
         seq_box.send_keys(fasta_input)
-
-        # method_dropdown = Select(driver.find_element(By.NAME, "method"))
-        # method_dropdown.select_by_visible_text("SVM + Motif")
 
         submit_button = driver.find_element(By.XPATH, '//input[@type="submit" and @value="Run Analysis!"]')
         submit_button.click()
@@ -47,14 +43,12 @@ def ToxinPred(peptide_list: list[str]):
         )
 
         result_table = driver.find_element(By.XPATH, "//table").text
-        print("\nToxinPred Results:\n", result_table)
         results = []
         rows = driver.find_elements(By.XPATH, "//table//tr")
         for row in rows:
             cells = row.find_elements(By.TAG_NAME, "td")
             cell_texts = [cell.text for cell in cells]
             if cell_texts:
-                print(cell_texts)
                 if len(cell_texts) >= 3:
                     results.append( {
                         "sequence": cell_texts[1],

@@ -14,14 +14,10 @@ def IEDB_conservancy_analysis(peptides: list[str], comparison_operator: str, thr
     for i, pep in enumerate(peptides, 1):
         line = f">seq{i}\n{pep}\n".lstrip()
         fasta_input += line
-        print(f"Current FASTA input:")
-        print(fasta_input)
     # Remove newline at the end
     fasta_input = fasta_input.strip()
     # Remove spaces at the start
     fasta_input = fasta_input.lstrip()
-
-    print("Submitting FASTA formatted peptides:\n", fasta_input)
 
     options = Options()
     options.add_argument("--headless=new")
@@ -49,73 +45,69 @@ def IEDB_conservancy_analysis(peptides: list[str], comparison_operator: str, thr
         },
     )
 
-    # try:
-    driver.get("http://tools.iedb.org/conservancy/")
+    try:
+        driver.get("http://tools.iedb.org/conservancy/")
+        
+        # Remove % sign if present
+        threshold_value = threshold_value.replace("%", "")  
 
-    print("Obtained parameters: ", comparison_operator, threshold_value)
-    threshold_value = threshold_value.replace("%", "")  # Remove % sign if present
+        peptide_box = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.NAME, "epitope_sequence"))
+        )
+        peptide_box.send_keys(fasta_input)
 
-    peptide_box = WebDriverWait(driver, 30).until(
-        EC.presence_of_element_located((By.NAME, "epitope_sequence"))
-    )
-    peptide_box.send_keys(fasta_input)
+        # Upload file in c_uploads folder
+        # Should only be one file here
+        file_input = driver.find_element(By.NAME, "protein_file")
+        file_input.clear()  # Clear any existing value
+        # Use absolute path to the file
+        # Find the first file in the folder
+        conservancy_file_path = None
+        if os.path.exists(UPLOAD_C_FOLDER):
+            for filename in os.listdir(UPLOAD_C_FOLDER):
+                file_path = os.path.join(UPLOAD_C_FOLDER, filename)
+                if os.path.isfile(file_path):
+                    conservancy_file_path = file_path
+                    break  # Use the first file found
 
-    # Upload file in c_uploads folder
-    # Should only be one file here
-    file_input = driver.find_element(By.NAME, "protein_file")
-    file_input.clear()  # Clear any existing value
-    # Use absolute path to the file
-    # Find the first file in the folder
-    conservancy_file_path = None
-    if os.path.exists(UPLOAD_C_FOLDER):
-        for filename in os.listdir(UPLOAD_C_FOLDER):
-            file_path = os.path.join(UPLOAD_C_FOLDER, filename)
-            if os.path.isfile(file_path):
-                conservancy_file_path = file_path
-                break  # Use the first file found
+        if conservancy_file_path is None:
+            raise FileNotFoundError("No conservancy file found in c_uploads folder.")
 
-    if conservancy_file_path is None:
-        raise FileNotFoundError("No conservancy file found in c_uploads folder.")
+        # Use conservancy_file_path in your selenium code:
+        file_input.send_keys(conservancy_file_path)
 
-    # Use conservancy_file_path in your selenium code:
-    file_input.send_keys(conservancy_file_path)
-    print(f"Using conservancy file: {conservancy_file_path}")
+        # New parameters
+        # Sequence identity threshold
+        epitope_option_select = Select(driver.find_element(By.NAME, "epitope_option"))
+        epitope_option_select.select_by_value(comparison_operator)
+        threshold_select = Select(driver.find_element(By.NAME, "threshold"))
+        threshold_select.select_by_value(threshold_value)
 
-    # New parameters
+        submit_button = driver.find_element(By.XPATH, '//input[@type="submit" and @value="Submit"]')
+        submit_button.click()
 
-    # Sequence identity threshold
-    epitope_option_select = Select(driver.find_element(By.NAME, "epitope_option"))
-    epitope_option_select.select_by_value(comparison_operator)
-    threshold_select = Select(driver.find_element(By.NAME, "threshold"))
-    threshold_select.select_by_value(threshold_value)
-    print(f"Selected comparison operator: {comparison_operator}, threshold value: {threshold_value}%")
+        WebDriverWait(driver, 60).until(
+            EC.presence_of_element_located((By.XPATH, "//table"))
+        )
 
-    submit_button = driver.find_element(By.XPATH, '//input[@type="submit" and @value="Submit"]')
-    submit_button.click()
+        if not driver.find_elements(By.XPATH, "//table"):
+            # Print the error message
+            print("No results table found after submission.")
+            raise TimeoutException("No results table found after submission.")
 
-    WebDriverWait(driver, 60).until(
-        EC.presence_of_element_located((By.XPATH, "//table"))
-    )
+        rows = driver.find_elements(By.XPATH, "//table//tr")
+        result_list = []
+        for row in rows:
+            cells = row.find_elements(By.TAG_NAME, "td")
+            cell_texts = [cell.text for cell in cells]
+            if cell_texts:
+                result_list.append(cell_texts)
 
-    if not driver.find_elements(By.XPATH, "//table"):
-        # Print the error message
-        print("No results table found after submission.")
-        raise TimeoutException("No results table found after submission.")
+        return {"results": result_list}
 
-    rows = driver.find_elements(By.XPATH, "//table//tr")
-    result_list = []
-    for row in rows:
-        cells = row.find_elements(By.TAG_NAME, "td")
-        cell_texts = [cell.text for cell in cells]
-        if cell_texts:
-            result_list.append(cell_texts)
-
-    return {"results": result_list}
-
-    # finally:
-        # driver.quit()
+    finally:
+        driver.quit()
 
 if __name__ == "__main__":
     peptides = ["YLQPRTFLL", "FIAGLIAIV", "KAFSPEVIPMF", "KTFPPTEPK"]
     results = IEDB_conservancy_analysis(peptides, "less", "100%")
-    print("Conservancy results:", results)

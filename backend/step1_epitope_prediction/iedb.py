@@ -16,7 +16,6 @@ METHOD_CONFIG = {
         "method": "netctl",
         "score_column": "netctl_score"
     }
-    # Add more methods here if needed
 }
 
 
@@ -25,7 +24,6 @@ def run_method(sequence: str, alleles: str, method_name: str):
     Runs a single prediction method and returns a list of peptide scores.
     """
     config = METHOD_CONFIG[method_name]
-    print(f"Running method: {method_name}")
     url = "https://api-nextgen-tools.iedb.org/api/v1/pipeline"
     # === Submit job ===
     payload = {
@@ -57,12 +55,7 @@ def run_method(sequence: str, alleles: str, method_name: str):
 
     response = requests.post(url, headers=headers, data=json.dumps(payload))
     if response.status_code == 200:
-        print("Success!")
-        print(json.dumps(response.json(), indent=2))
         result_id = response.json().get("result_id")
-    else:
-        print(f"Error {response.status_code}")
-        print(response.text)
 
     #### GETTING RESULTS ####
 
@@ -73,29 +66,22 @@ def run_method(sequence: str, alleles: str, method_name: str):
     while True:
         response = requests.get(url, headers=headers)
         if response.status_code != 200:
-            print(f"Error {response.status_code}: {response.text}")
+            pass
         
         result_data = response.json()
-        print("Current status:", result_data.get("status"))
         if result_data.get("status") == "done":
             result = result_data
-            print("Results are ready!")
             break
 
         if result_data.get("status") == "error":
-            print("Error in processing:", result_data.get("error_message"))
             break
         if time.time() - start_time > 30:
-            print("Timeout reached while waiting for results.")
+            pass
         if time.time() - start_time > 80:
-            print("Long wait time, exiting.")
-            return []
-        
-        print("Waiting for results...")
+            pass
         time.sleep(2)
 
     #### READING RESULTS ####
-    print("Results:", json.dumps(result, indent=2))
 
     output_filename = "iedb_output.json"
     with open(output_filename, "w") as f:
@@ -117,8 +103,6 @@ def run_method(sequence: str, alleles: str, method_name: str):
     peptide_idx = col_idx.get("peptide")
     score_idx = col_idx.get(config["score_column"]) or col_idx.get("predictions_score")
     allele = col_idx.get("allele")
-    if allele:
-        print("Alleles:", allele)
     if peptide_idx is None or score_idx is None or allele is None:
         raise ValueError(f"Columns not found: peptide or {config['score_column']} or allele")
 
@@ -134,15 +118,10 @@ def run_method(sequence: str, alleles: str, method_name: str):
     for p in result:
         sequence = p["sequence"]
         alleles = [row[allele] for row in data_rows if row[peptide_idx] == p["sequence"]]
-        print(f"Peptide: {p['sequence']}, Score: {p['score']}, Alleles: {alleles}")
         hla_alleles.append({
             "sequence": p["sequence"],
             "alleles": alleles
         })
-
-    print(f"Top 10 peptides for {method_name}:")
-    for p in result:
-        print(p)
 
     return result, hla_alleles
 
@@ -155,9 +134,7 @@ def IEDB_epitope_prediction(sequence: str, alleles: str, methods: list):
     allele_by_sequence = {}
     
     for method in methods:
-        print(f"Running method: {method}")
         results, hla_alleles = run_method(sequence, alleles, method)
-        print(f"Results for {method}: {results}")
         for rank, entry in enumerate(results):
             seq = entry["sequence"]
             score = entry["score"]
@@ -180,10 +157,6 @@ def IEDB_epitope_prediction(sequence: str, alleles: str, methods: list):
         }
         for seq, combined_score in combined.items()
     ]
+
     consensus.sort(key=lambda x: x["weighted_score"], reverse=True)
-
-    print("\nConsensus Top Peptides:")
-    for p in consensus[:10]:
-        print(p)
-
     return consensus, hla_alleles
