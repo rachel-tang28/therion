@@ -40,9 +40,6 @@ client = Groq(
     api_key=api_key,
 )
 
-# Print current directory
-print("Current Directory:", os.getcwd())
-
 # To run the server, use the command:
 # fastapi dev main.py
 
@@ -288,7 +285,6 @@ async def create_upload_conservancy_file(file_uploads: list[UploadFile], request
     filenames = []
     for file_upload in file_uploads:
         data = await file_upload.read()
-        # print(f"Sequence from file {data}")
         # Check it doesn't end in txt, docx, or doc, if so, return error
         if file_upload.filename.endswith(('.txt', '.docx', '.doc')):
             return JSONResponse(
@@ -300,7 +296,6 @@ async def create_upload_conservancy_file(file_uploads: list[UploadFile], request
         # Store the sequence in the global variable
         global global_sequence
         global_sequence = fasta_sequence
-        # print(f"FASTA Sequence: {fasta_sequence}")
         save_to = os.path.join(UPLOAD_C_FOLDER, file_upload.filename)
         with open(save_to, 'wb') as f:
             f.write(data)
@@ -318,7 +313,6 @@ async def upload_conservancy_sequence(request: ConservancySequenceUpload):
     Handles sequence uploads.
     Returns the uploaded sequence.
     """
-    # print("Received sequence:", request.conservancySequence)
     global global__conservancy_sequence
     global__conservancy_sequence = request.conservancySequence
     return {"conservancy_sequence": request.conservancySequence}
@@ -335,7 +329,6 @@ async def upload_alleles(request: AlleleUpload):
     print("Received alleles:", request.alleles)
     global global_alleles
     global_alleles = request.alleles
-    # Here you would handle the alleles as needed
     return {"alleles": request.alleles}
 
 class EpitopePredictionRequest(BaseModel):
@@ -351,38 +344,11 @@ async def epitope_prediction(request: EpitopePredictionRequest):
     output, hla_alleles = IEDB_epitope_prediction(global_sequence, request.alleles, global_selections)
     print("Output from IEDB:", output)
     print("HLA Alleles from IEDB:", hla_alleles)
-    # # Create dummy output
-    # output = [
-    #     {"sequence": "LTDEMIAQY", "weighted_score": 9.97, "allele": "HLA-A*01:01"},
-    #     {"sequence": "IPFAMQMAY", "weighted_score": 8.95, "allele": "HLA-B*35:01"},
-    #     {"sequence": "HADQLTPTW", "weighted_score": 7.92, "allele": "HLA-B*58:01"},
-    #     {"sequence": "LPFNDGVYF", "weighted_score": 6.89, "allele": "HLA-B*35:01"},
-    #     {"sequence": "QELGKYEQY", "weighted_score": 5.91, "allele": "HLA-B*44:03"},
-    #     {"sequence": "LPFFSNVTW", "weighted_score": 4.91, "allele": "HLA-B*53:01"},
-    #     {"sequence": "VASQSIIAY", "weighted_score": 3.92, "allele": "HLA-B*35:01"},
-    #     {"sequence": "RLFRKSNLK", "weighted_score": 2.94, "allele": "HLA-A*03:01"},
-    #     {"sequence": "AEIRASANL", "weighted_score": 1.95, "allele": "HLA-B*40:01"},
-    #     {"sequence": "NTQEVFAQV", "weighted_score": 0.98,  "allele": "HLA-A*68:02"}
-    # ]
-
-    # hla_alleles = [
-    #     {"sequence": "LTDEMIAQY", "alleles": ["HLA-A*01:01"]},
-    #     {"sequence": "IPFAMQMAY", "alleles": ["HLA-B*35:01"]},
-    #     {"sequence": "HADQLTPTW", "alleles": ["HLA-B*58:01"]},
-    #     {"sequence": "LPFNDGVYF", "alleles": ["HLA-B*35:01"]},
-    #     {"sequence": "QELGKYEQY", "alleles": ["HLA-B*44:03"]},
-    #     {"sequence": "LPFFSNVTW", "alleles": ["HLA-B*53:01"]},
-    #     {"sequence": "VASQSIIAY", "alleles": ["HLA-B*35:01"]},
-    #     {"sequence": "RLFRKSNLK", "alleles": ["HLA-A*03:01"]},
-    #     {"sequence": "AEIRASANL", "alleles": ["HLA-B*40:01"]},
-    #     {"sequence": "NTQEVFAQV", "alleles": ["HLA-A*68:02"]}
-    # ]
 
     global global_results
     global_results["epitope_prediction"] = output
     global global_sequence_and_alleles
     global_sequence_and_alleles = hla_alleles
-    # print("Global Sequence and Alleles updated:", global_sequence_and_alleles)
     return output
 
 class ConservancyAnalysisRequest(BaseModel):

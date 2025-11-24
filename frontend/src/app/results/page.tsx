@@ -14,13 +14,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ResultsTable from "@/components/ui/results_table";
 import ResultsCompleteTable from "@/components/ui/results_summary";
 import RoundIcon from "@/components/ui/round_icon";
-import { Loader2, Terminal, Zap, CheckCircle2Icon } from "lucide-react";
+import { Loader2, Terminal, Zap } from "lucide-react";
 import Image from "next/image";
 import { Chat } from "@/components/ui/chat";
 import AntigenicityTable from "@/components/ui/antigenicity_table";
 import AllergenicityTable from "@/components/ui/allergenicity_table";
 import ToxicityTable from "@/components/ui/toxicity_table";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Alert, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { FeedbackTab } from "@/components/feedback_tab";
@@ -85,10 +85,7 @@ const renderCustomizedLabel = ({
   innerRadius,
   outerRadius,
   percent,
-  index,
-  payload,
 }) => {
-  const name = payload.name;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
@@ -127,7 +124,7 @@ export default function ResultsPage() {
   const [progress, setProgress] = useState(1);
   const [currentMessage, setCurrentMessage] = useState(1);
   const [results, setResults] = useState<ResultCompleteEntry[]>([]);
-  const [selections, setSelections] = useState<string>("");
+  const [selections, setSelections] = useState<string[]>([]);
   const [steps, setSteps] = useState<Record<number, boolean>>({});
 
   const messages = [
@@ -145,40 +142,6 @@ export default function ResultsPage() {
 
   const [antigenicityThreshold, setAntigenicityThreshold] = useState<number>(0.4);
   const [allergenicityThreshold, setAllergenicityThreshold] = useState<number>(0.3);
-
-  // // Simulate progress updates
-  // useEffect(() => {
-  //     const interval = setInterval(() => {
-  //     setProgress((prev) => {
-  //         if (prev >= 100) {
-  //         return 0 // Reset for demo purposes
-  //         }
-  //         return prev + Math.random() * 15
-  //     })
-  //     }, 800)
-
-  //     return () => clearInterval(interval)
-  // }, [])
-
-  // // Cycle through messages - increase interval for longer text
-  // useEffect(() => {
-  //     const interval = setInterval(() => {
-  //     setCurrentMessage((prev) => (prev + 1) % messages.length)
-  //     }, 4000) // Increased from 2000 to 4000ms
-
-  //     return () => clearInterval(interval)
-  // }, [messages.length])
-
-  // // Switch between indeterminate and determinate modes
-  // useEffect(() => {
-  //     const timeout = setTimeout(() => {
-  //     setIsIndeterminate(false)
-  //     }, 3000)
-
-  //     return () => clearTimeout(timeout)
-  // }, [])
-
-  // const estimatedTime = Math.max(1, Math.ceil((100 - progress) / 20))
 
   async function runScreenings(predictedPeptides: ResultEntry[]) {
     const endpoints = [
@@ -225,7 +188,6 @@ export default function ResultsPage() {
           return response.json();
         })
         .then((data) => {
-          console.log(`${endpoint.name} results:`, data);
           if (endpoint.name === "Vaxijen") {
             const antigenArray = Array.isArray(data) ? data : data.results;
 
@@ -242,7 +204,6 @@ export default function ResultsPage() {
               })
               .then((data) => {
                 setAntigenicityThreshold(data.threshold);
-                console.log("Antigenicity threshold:", data.threshold);
               });
 
             if (Array.isArray(antigenArray)) {
@@ -267,19 +228,12 @@ export default function ResultsPage() {
                   }
                   return entry;
                 });
-                console.log("Updated results after antigen:", updated);
                 return updated;
               });
-              // console.log("Updated results: ", results);
             } else {
               console.warn("Vaxijen data is not an array:", data);
               setAntigenicityScreening([]);
             }
-
-            console.log(
-              "Antigenicity Screening Results:",
-              antigenicityScreening
-            );
           } else if (endpoint.name === "AlgPred2") {
             const allergenArray = Array.isArray(data) ? data : data.results;
 
@@ -296,7 +250,6 @@ export default function ResultsPage() {
               })
               .then((data) => {
                 setAllergenicityThreshold(data.threshold);
-                console.log("Allergenicity threshold:", data.threshold);
               });
 
             if (Array.isArray(allergenArray)) {
@@ -320,19 +273,12 @@ export default function ResultsPage() {
                   }
                   return entry;
                 });
-                console.log("Updated results after allergen:", updated);
                 return updated;
               });
-              // console.log("Updated results: ", results);
             } else {
               console.warn("AlgPred2 data is not an array:", data);
               setAllergenicityScreening([]);
             }
-
-            console.log(
-              "Allergenicity Screening Results:",
-              allergenicityScreening
-            );
           } else if (endpoint.name === "ToxinPred") {
             const toxicityArray = Array.isArray(data) ? data : data.results;
 
@@ -362,11 +308,8 @@ export default function ResultsPage() {
                 }
                 return entry;
               });
-              console.log("Updated results after toxin:", updated);
               return updated;
             });
-            console.log("Toxicity Screening Results:", toxicityScreening);
-            // console.log("Updated results: ", results);
           }
           return { name: endpoint.name, data };
         })
@@ -378,7 +321,6 @@ export default function ResultsPage() {
 
     const allResults = await Promise.all(requests);
 
-    console.log("All screening results:", allResults);
     if (progress >= 100) {
       setProgress(100);
       setCurrentMessage(messages.length - 1);
@@ -410,7 +352,6 @@ export default function ResultsPage() {
         }
         const data = await response.json();
         setSteps(data.steps);
-        console.log("Steps from backend:", data.steps);
       } catch (error) {
         console.error("Error fetching steps:", error);
       }
@@ -429,16 +370,12 @@ export default function ResultsPage() {
       }
 
       if (predictedPeptides.length > 0) {
-        console.log("Peptides already extracted, skipping epitope prediction.");
         setLoading(false);
         return;
       }
 
       try {
-        console.log("Starting epitope prediction...");
-        const endpoint =
-          process.env.NEXT_PUBLIC_API_ENDPOINT + "epitope_prediction/";
-        console.log("Endpoint: ", endpoint);
+        const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + "epitope_prediction/";
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
@@ -448,13 +385,12 @@ export default function ResultsPage() {
           body: JSON.stringify({
             alleles:
               "HLA-A*01:01, HLA-A*02:01, HLA-A*02:03, HLA-A*02:06, HLA-A*03:01, HLA-A*11:01, HLA-A*23:01, HLA-A*24:02, HLA-A*26:01, HLA-A*30:01, HLA-A*30:02, HLA-A*31:01, HLA-A*32:01, HLA-A*33:01, HLA-A*68:01, HLA-A*68:02, HLA-B*07:02, HLA-B*08:01, HLA-B*15:01, HLA-B*35:01, HLA-B*40:01, HLA-B*44:02, HLA-B*44:03, HLA-B*51:01, HLA-B*53:01, HLA-B*57:01, HLA-B*58:01",
-            methods: ["netmhcpan_el"],
+            methods: selections,
           }),
         });
 
         if (response.ok) {
           const data = await response.json();
-          console.log("Epitope prediction result:", data);
           // Extract peptides from the response
           let count = 1;
           for (const item of data) {
@@ -467,7 +403,6 @@ export default function ResultsPage() {
                 rank: count++,
               };
               predictedPeptides.push(resultEntry);
-              console.log("Extracted peptide:", resultEntry);
             }
           }
           // Ensure predicted Peptides is only first 10 entries
@@ -482,18 +417,15 @@ export default function ResultsPage() {
                   sequence: item.sequence,
                   binding_score: Math.round(item.weighted_score * 10 * 10) / 10, // Round to 1 decimal place
                   allele: item.allele,
-                  antigen: false, // Placeholder, will be updated later
-                  allergen: false, // Placeholder, will be updated later
-                  toxin: false, // Placeholder, will be updated later
+                  antigen: false, // Placeholder - is updated later in code
+                  allergen: false, // Placeholder - is updated later in code
+                  toxin: false, // Placeholder - is updated later in code
                   rank: count++,
                 };
                 results.push(resultEntry);
-                console.log("Extracted result:", resultEntry);
               }
             }
             setResults(results);
-            console.log("Peptides extracted:", predictedPeptides);
-            console.log("Results updated:", results);
             if (progress + 20 < 100) {
               setProgress((prev) => prev + 20);
               setCurrentMessage((prev) => (prev + 1) % messages.length);
@@ -585,7 +517,6 @@ export default function ResultsPage() {
       try {
         const endpoint =
           process.env.NEXT_PUBLIC_API_ENDPOINT + "population_coverage/";
-        console.log("Endpoint: ", endpoint);
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
@@ -603,9 +534,6 @@ export default function ResultsPage() {
         }
 
         const result: PopulationCoverageResult[] = await response.json();
-        console.log("Population coverage results:", result);
-        
-        console.log("Population coverage results:", result);
         if (progress + 20 <= 100 && populationResults.length === 0) {
           setPopulationResults(result);
           setProgress((prev) => prev + 20);
@@ -628,72 +556,6 @@ export default function ResultsPage() {
       } catch (err) {
         console.error("Error during screenings:", err);
       }
-
-      // // Antigenicity Screening
-      // try {
-      //   const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'antigenicity_screening/';
-      //     console.log("Endpoint: ", endpoint);
-      //     const response = await fetch(endpoint, {
-      //         method: "POST",
-      //         headers: {
-      //         "Content-Type": "application/json"
-      //         },
-      //         body: JSON.stringify({ peptides: predictedPeptides.map(p => p.sequence) })
-      //     });
-
-      //   if (!response.ok) {
-      //     throw new Error("API request failed");
-      //   }
-
-      //   const data = await response.json();
-      //   console.log("Vaxijen results:", data);
-      // } catch (err) {
-      //   console.error(err);
-      // }
-
-      // // Allergenicity Screening
-      // try {
-      // const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'allergenicity_screening/';
-      //     console.log("Endpoint: ", endpoint);
-      //     const response = await fetch(endpoint, {
-      //         method: "POST",
-      //         headers: {
-      //         "Content-Type": "application/json"
-      //         },
-      //         body: JSON.stringify({ peptides: predictedPeptides.map(p => p.sequence) })
-      //     });
-
-      // if (!response.ok) {
-      //     throw new Error("API request failed");
-      // }
-
-      // const data = await response.json();
-      // console.log("AlgPred2 results:", data);
-      // } catch (err) {
-      // console.error(err);
-      // }
-
-      // // Toxicity Screening
-      // try {
-      // const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'toxicity_screening/';
-      //     console.log("Endpoint: ", endpoint);
-      //     const response = await fetch(endpoint, {
-      //         method: "POST",
-      //         headers: {
-      //         "Content-Type": "application/json"
-      //         },
-      //         body: JSON.stringify({ peptides: predictedPeptides.map(p => p.sequence) })
-      //     });
-
-      // if (!response.ok) {
-      //     throw new Error("API request failed");
-      // }
-
-      // const data = await response.json();
-      // console.log("ToxinPred results:", data);
-      // } catch (err) {
-      // console.error(err);
-      // }
       setLoading(false);
     }
     runPipeline();
@@ -824,15 +686,6 @@ export default function ResultsPage() {
                   {messages[currentMessage]}
                 </p>
               </div>
-
-              {/* Loading dots animation */}
-              {/* <div className="flex items-center justify-center space-x-2">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                        <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                        <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"></div>
-                      </div>
-                    </div> */}
             </div>
           </div>
 
@@ -848,7 +701,7 @@ export default function ResultsPage() {
             </div>
           </div>
 
-          {/* Subtle background animation */}
+          {/* Background animation */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute -top-40 -right-40 w-80 h-80 bg-amber-400/10 rounded-full animate-pulse"></div>
             <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-400/10 rounded-full animate-pulse [animation-delay:1s]"></div>
@@ -956,7 +809,7 @@ export default function ResultsPage() {
                 <div className="w-full flex justify-start p-[8px] mb-[2px]">
                   <Alert variant="default" className="flex items-center">
                     <Terminal className="h-4 w-4 align-middle" />
-                    <AlertTitle className="ml-0">Computed using: <span className="italic">{selections}</span></AlertTitle>
+                    <AlertTitle className="ml-0">Computed using: <span className="italic">{selections.join(", ")}</span></AlertTitle>
                   </Alert>
                 </div>
                 <h2 className="text-lg font-semibold mb-4">

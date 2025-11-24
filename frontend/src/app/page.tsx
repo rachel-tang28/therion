@@ -21,13 +21,11 @@ import { Chat } from "@/components/ui/chat";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { BotMessageSquare, Check, CheckSquare2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -62,12 +60,10 @@ export default function Pipeline() {
   const router = useRouter();
   const [fileUpload, setFileUpload] = useState(false);
   const [conservancyFileUpload, setConservancyFileUpload] = useState(false);
-  // const [selectedAlleles, setSelectedAlleles] = useState<string[]>([]);
 
   const [showDialog, setShowDialog] = useState(false);
   const [threshold, setThreshold] = useState<number>(0.4); // Default threshold value
-  const [allergenicityThreshold, setAllergenicityThreshold] =
-    useState<number>(0.3); // Default allergenicity threshold value
+  const [allergenicityThreshold, setAllergenicityThreshold] = useState<number>(0.3); // Default allergenicity threshold value
   const [selections, setSelections] = useState<string[]>([]);
   const [comparisonOperator, setComparisonOperator] = useState<string>("less");
   const [identityThreshold, setIdentityThreshold] = useState<string>("100%");
@@ -99,50 +95,10 @@ export default function Pipeline() {
   useEffect(() => {
     setShowDialog(true);
   }, []);
-  // 2. Handler to toggle selection
-  // const handleToggle = (allele: string) => {
-  //     console.log("Selected Alleles:", selectedAlleles);
-  //     setSelectedAlleles(prev => {
-  //     if (prev.includes(allele)) {
-  //         // Deselect
-  //         if (prev.length === 1) {
-  //             setPopCovError(true); // Set error if last allele is deselected
-  //         }
-  //         return prev.filter(a => a !== allele);
-  //     } else {
-  //         // Select
-  //         setPopCovError(false); // Reset error state when an allele is selected
-  //         return [...prev, allele];
-  //     }
-  //     });
-  // };
-
-  // // 3. Create final list with "HLA-" prefix
-  // const finalSelections = selectedAlleles.map(allele => `HLA-${allele}`);
-  // console.log('Selections to send:', finalSelections);
-
-  // // 5. Example list of alleles for each gene
-  // const hlaA = [
-  //     'A*01:01', 'A*02:01', 'A*02:06', 'A*03:01', 'A*11:01', 'A*23:01', 'A*24:02',
-  //     'A*25:01', 'A*26:01', 'A*29:02', 'A*30:01', 'A*31:01', 'A*32:01', 'A*33:01',
-  //     'A*34:01', 'A*66:01', 'A*68:01', 'A*69:01', 'A*74:01'
-  // ];
-
-  // const hlaB = [
-  //     'B*07:02', 'B*08:01', 'B*13:02', 'B*15:01', 'B*18:01', 'B*27:05', 'B*35:01',
-  //     'B*37:01', 'B*38:01', 'B*39:01', 'B*40:01', 'B*44:02', 'B*44:03', 'B*51:01',
-  //     'B*52:01', 'B*53:01', 'B*57:01', 'B*58:01', 'B*73:01'
-  // ];
-
-  // const hlaC = [
-  //     'C*01:02', 'C*02:02', 'C*03:03', 'C*04:01', 'C*05:01', 'C*06:02',
-  //     'C*07:01', 'C*07:02', 'C*08:01', 'C*12:03', 'C*14:02', 'C*15:02'
-  // ];
 
   const handleFileUpload = (file: File | null) => {
     if (file) {
       setUploadedFiles((prev: File[]) => [...prev, file]);
-      console.log("File uploaded:", file);
     }
 
     setError(false); // Reset error state when a file is uploaded
@@ -152,7 +108,6 @@ export default function Pipeline() {
   const handleConservancyFileUpload = (file: File | null) => {
     if (file) {
       setUploadedConservancyFiles((prev: File[]) => [...prev, file]);
-      console.log("File uploaded:", file);
     }
 
     setError(false); // Reset error state when a file is uploaded
@@ -162,10 +117,8 @@ export default function Pipeline() {
   const handleSubmit = async (event: any) => {
     event.preventDefault();
 
-    console.log("Steps sent to backend: ", activeSteps);
     try {
       const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + "upload_steps/";
-      console.log("Endpoint: ", endpoint);
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -176,7 +129,6 @@ export default function Pipeline() {
           activeSteps: activeSteps,
         }),
       });
-      console.log("Response from upload_steps:", response);
     } catch (error) {
       console.error(error);
     }
@@ -204,7 +156,6 @@ export default function Pipeline() {
         const endpoint =
           process.env.NEXT_PUBLIC_API_ENDPOINT +
           "upload_conservancy_parameters/";
-        console.log("Endpoint: ", endpoint);
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
@@ -216,7 +167,6 @@ export default function Pipeline() {
             identityThreshold: identityThreshold,
           }),
         });
-        console.log("Response from upload_conservancy_parameters:", response);
       } catch (error) {
         console.error(error);
       }
@@ -226,18 +176,16 @@ export default function Pipeline() {
       try {
         const endpoint =
           process.env.NEXT_PUBLIC_API_ENDPOINT + "upload_threshold/";
-        console.log("Endpoint: ", endpoint);
-        const response = await fetch(endpoint, {
+        await fetch(endpoint, {
           method: "POST",
           headers: {
             "X-API-KEY": process.env.NEXT_PUBLIC_API_KEY || "",
-            "Content-Type": "application/json", // <-- Add this
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             threshold: threshold,
           }),
         });
-        console.log("Response from upload_threshold:", response);
       } catch (error) {
         console.error(error);
       }
@@ -248,8 +196,7 @@ export default function Pipeline() {
         const endpoint =
           process.env.NEXT_PUBLIC_API_ENDPOINT +
           "upload_allergenicity_threshold/";
-        console.log("Endpoint: ", endpoint);
-        const response = await fetch(endpoint, {
+        await fetch(endpoint, {
           method: "POST",
           headers: {
             "X-API-KEY": process.env.NEXT_PUBLIC_API_KEY || "",
@@ -259,7 +206,6 @@ export default function Pipeline() {
             threshold: allergenicityThreshold,
           }),
         });
-        console.log("Response from upload_allergenicity_threshold:", response);
       } catch (error) {
         console.error(error);
       }
@@ -269,11 +215,10 @@ export default function Pipeline() {
       try {
         const endpoint =
           process.env.NEXT_PUBLIC_API_ENDPOINT + "upload_selections/";
-        console.log("Endpoint: ", endpoint);
         if (selections.length === 0) {
           setSelections(["netmhcpan_el", "netctl"]); // Default selections if none provided
         }
-        const response = await fetch(endpoint, {
+        await fetch(endpoint, {
           method: "POST",
           headers: {
             "X-API-KEY": process.env.NEXT_PUBLIC_API_KEY || "",
@@ -283,44 +228,10 @@ export default function Pipeline() {
             selections: selections,
           }),
         });
-        console.log("Response from upload_selections:", response);
       } catch (error) {
         console.error(error);
       }
     }
-
-    //  if (selectedAlleles.length === 0) {
-    //     setPopCovError(true);
-    //     alert("Please select at least one HLA allele.");
-    //     return;
-    // }
-
-    // // Upload allele selections
-    // if (selectedAlleles.length > 0) {
-    //     try {
-    //         const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'upload_alleles/';
-    //         console.log("Endpoint: ", endpoint);
-    //         const response = await fetch(endpoint, {
-    //             method: "POST",
-    //             headers: {
-    //                 'X-API-KEY': process.env.NEXT_PUBLIC_API_KEY || '',
-    //                 'Content-Type': 'application/json',
-    //             },
-    //             body: JSON.stringify({ alleles: finalSelections })
-    //         });
-
-    //         if (response.ok) {
-    //             console.log("Alleles uploaded successfully.");
-    //         } else {
-    //             console.error("Failed to upload alleles.");
-    //             const errorData = await response.json();
-    //             console.error("Failed to upload alleles:", errorData.detail);
-    //             alert("Error: " + errorData.detail);
-    //         }
-    //     } catch (error) {
-    //         console.error(error);
-    //     }
-    // }
 
     // Upload conservancy analysis files or sequence
     if (activeSteps[3]) {
@@ -333,7 +244,6 @@ export default function Pipeline() {
         try {
           const endpoint =
             process.env.NEXT_PUBLIC_API_ENDPOINT + "pipeline_name/";
-          console.log("Endpoint: ", endpoint);
           const response = await fetch(endpoint, {
             method: "POST",
             headers: {
@@ -348,15 +258,11 @@ export default function Pipeline() {
           if (response.ok) {
             // Clear files and redirect on success
             setUploadedConservancyFiles([]);
-
-            //   router.push('../projects');
           } else {
             console.error("Failed to upload files.");
             const errorData = await response.json();
             console.error("Failed to upload files:", errorData.detail);
             alert("Error: " + errorData.detail);
-
-            //   router.push('/upload_files/');
           }
         } catch (error) {
           console.error(error);
@@ -365,7 +271,6 @@ export default function Pipeline() {
         try {
           const endpoint =
             process.env.NEXT_PUBLIC_API_ENDPOINT + "upload_conservancy_file/";
-          console.log("Endpoint: ", endpoint);
           const response = await fetch(endpoint, {
             method: "POST",
             headers: {
@@ -377,8 +282,6 @@ export default function Pipeline() {
           if (response.ok) {
             // Clear files and redirect on success
             setUploadedConservancyFiles([]);
-
-            //   router.push('../projects');
           } else {
             console.error("Failed to upload files.");
             const errorData = await response.json();
@@ -387,8 +290,6 @@ export default function Pipeline() {
             setConservancyError(true);
             setUploadedConservancyFiles([]);
             return;
-
-            //   router.push('/upload_files/');
           }
         } catch (error) {
           console.error(error);
@@ -408,16 +309,10 @@ export default function Pipeline() {
         }
         setConservancyError(false);
         // If sequence is valid, send to backend
-        console.log("Conservancy Sequence:", conservancySequence);
-        console.log(
-          "Stringified Conservancy Sequence:",
-          JSON.stringify({ conservancySequence })
-        );
         try {
           const endpoint =
             process.env.NEXT_PUBLIC_API_ENDPOINT +
             "upload_conservancy_sequence/";
-          console.log("Endpoint: ", endpoint);
           const response = await fetch(endpoint, {
             method: "POST",
             headers: {
@@ -450,7 +345,6 @@ export default function Pipeline() {
 
       try {
         const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + "upload_file/";
-        console.log("Endpoint: ", endpoint);
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
@@ -463,15 +357,11 @@ export default function Pipeline() {
           // Clear files and redirect on success
           setUploadedFiles([]);
           router.push("/results");
-
-          //   router.push('../projects');
         } else {
           console.error("Failed to upload files.");
           const errorData = await response.json();
           console.error("Failed to upload files:", errorData.detail);
           alert("Error: " + errorData.detail);
-
-          //   router.push('/upload_files/');
         }
       } catch (error) {
         console.error(error);
@@ -489,7 +379,6 @@ export default function Pipeline() {
       try {
         const endpoint =
           process.env.NEXT_PUBLIC_API_ENDPOINT + "upload_sequence/";
-        console.log("Endpoint: ", endpoint);
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
@@ -515,8 +404,6 @@ export default function Pipeline() {
         console.error(error);
       }
     }
-
-    console.log("Sequence:", sequence);
   };
 
   return (
@@ -580,7 +467,6 @@ export default function Pipeline() {
                   value={pipelineName}
                   onChange={(e) => setPipelineName(e.target.value)}
                 />
-                {/* keep in DOM so CSS transition can animate on enter */}
                 <span className="inline-block w-5 h-5">
                   <CheckSquare2
                     className={`w-5 h-5 text-green-600 transform transition-opacity transition-transform duration-300 ease-out ${
@@ -638,7 +524,6 @@ export default function Pipeline() {
               <div className="flex items-center space-x-2">
                 <Tooltip delayDuration={100}>
                   <TooltipTrigger asChild>
-                    {/* 👇 This is the actual trigger for the tooltip */}
                     <div className="flex items-center space-x-2 cursor-pointer">
                       <RadioGroupItem
                         value="select-all"
@@ -670,26 +555,6 @@ export default function Pipeline() {
               </div>
             </RadioGroup>
           </TooltipProvider>
-
-          {/* <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                    value="deselect-all"
-                    id="deselect-all"
-                    onClick={() => {
-                        setActiveSteps({
-                        1: false,
-                        2: false,
-                        3: false,
-                        4: false,
-                        5: false,
-                        6: false,
-                        7: false,
-                        8: false,
-                        });
-                    }}
-                    /> */}
-          {/* <Label htmlFor="deselect-all">Deselect All</Label> */}
-          {/* </div> */}
         </div>
 
         <Accordion
@@ -729,15 +594,11 @@ export default function Pipeline() {
                           onClick={(e) => {
                             e.stopPropagation(); // prevent accordion toggle
                             setError(true);
-                            console.log(
-                              "Step 1 cannot be deselected for this pipeline."
-                            );
-
                             // Automatically collapse accordion if step becomes inactive
                             if (activeSteps[1]) {
                               setIsOpen1(false);
                             } else {
-                              setIsOpen1(true); // optionally expand when activating
+                              setIsOpen1(true);
                             }
                           }}
                         >
@@ -840,13 +701,10 @@ export default function Pipeline() {
                           onClick={(e) => {
                             e.stopPropagation();
                             setConservancyError(true);
-                            console.log(
-                              "Step 2 cannot be deselected for this pipeline."
-                            );
                             if (activeSteps[2]) {
                               setIsOpen2(true);
                             } else {
-                              setIsOpen2(true); // optionally expand when activating
+                              setIsOpen2(true);
                             }
                           }}
                         >
@@ -885,7 +743,6 @@ export default function Pipeline() {
                       onCheckedChange={setS2Consensus}
                     ></Switch>
                   </div>
-
                   <h1
                     className={`parameter-heading transition-all duration-300 ease-in-out
                                     ${
@@ -920,7 +777,6 @@ export default function Pipeline() {
                         );
                       }}
                     >
-                      {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
                       NetMHCpan_el
                     </Toggle>
                     <Toggle
@@ -934,7 +790,6 @@ export default function Pipeline() {
                         );
                       }}
                     >
-                      {/* <Image src="/mhcflurry.svg" alt="MHCflurry Icon" width={16} height={16}></Image> */}
                       NetCTL
                     </Toggle>
                   </div>
@@ -980,10 +835,7 @@ export default function Pipeline() {
                           }
                         }}
                       >
-                        {/* Round icon */}
                         <RoundIcon imageSrc="/tree_emoji.svg" />
-
-                        {/* Check overlay */}
                         <div
                           className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center border-[2px] border-gray-400 check-toggle transition-colors
                                 ${
@@ -1070,7 +922,6 @@ export default function Pipeline() {
                       onCheckedChange={setS2Consensus}
                     ></Switch>
                   </div>
-
                   <h1
                     className={`parameter-heading transition-all duration-300 ease-in-out
                                     ${
@@ -1095,7 +946,6 @@ export default function Pipeline() {
                                 `}
                   >
                     <Toggle className="toggle-button" variant="outline">
-                      {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
                       IEDB
                     </Toggle>
                   </div>
@@ -1198,10 +1048,7 @@ export default function Pipeline() {
                           }
                         }}
                       >
-                        {/* Round icon */}
                         <RoundIcon imageSrc="/shield_emoji.svg" />
-
-                        {/* Check overlay */}
                         <div
                           className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center border-[2px] border-gray-400 check-toggle transition-colors
                                 ${
@@ -1248,7 +1095,6 @@ export default function Pipeline() {
                       onCheckedChange={setS2Consensus}
                     ></Switch>
                   </div>
-
                   <h1
                     className={`parameter-heading transition-all duration-300 ease-in-out
                                     ${
@@ -1273,7 +1119,6 @@ export default function Pipeline() {
                                 `}
                   >
                     <Toggle className="toggle-button" variant="outline">
-                      {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
                       VaxiJen
                     </Toggle>
                   </div>
@@ -1302,7 +1147,6 @@ export default function Pipeline() {
                             } else {
                               setThreshold(0.4); // Reset to default if invalid input
                             }
-                            console.log("Threshold value:", e.target.value);
                           }}
                         ></Input>
                       </div>
@@ -1350,10 +1194,7 @@ export default function Pipeline() {
                           }
                         }}
                       >
-                        {/* Round icon */}
                         <RoundIcon imageSrc="/pill_emoji.svg" />
-
-                        {/* Check overlay */}
                         <div
                           className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center border-[2px] border-gray-400 check-toggle transition-colors
                                 ${
@@ -1366,7 +1207,6 @@ export default function Pipeline() {
                         </div>
                       </div>
                     </TooltipTrigger>
-
                     <TooltipContent side="top">
                       <p>
                         {activeSteps[5]
@@ -1425,7 +1265,6 @@ export default function Pipeline() {
                                 `}
                   >
                     <Toggle className="toggle-button" variant="outline">
-                      {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
                       AlgPred2
                     </Toggle>
                   </div>
@@ -1456,10 +1295,6 @@ export default function Pipeline() {
                             } else {
                               setAllergenicityThreshold(0.3); // Reset to default if invalid input
                             }
-                            console.log(
-                              "Allergenicity threshold value:",
-                              e.target.value
-                            );
                           }}
                         ></Input>
                       </div>
@@ -1494,7 +1329,6 @@ export default function Pipeline() {
                 <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      {/* Tooltip triggers when hovering anywhere on this block */}
                       <div
                         className="relative inline-block cursor-pointer"
                         onClick={(e) => {
@@ -1507,10 +1341,7 @@ export default function Pipeline() {
                           }
                         }}
                       >
-                        {/* Round icon */}
                         <RoundIcon imageSrc="/biohazard_emoji.svg" />
-
-                        {/* Check overlay */}
                         <div
                           className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center border-[2px] border-gray-400 check-toggle transition-colors
                                 ${
@@ -1557,7 +1388,6 @@ export default function Pipeline() {
                       onCheckedChange={setS2Consensus}
                     ></Switch>
                   </div>
-
                   <h1
                     className={`parameter-heading transition-all duration-300 ease-in-out
                                     ${
@@ -1582,7 +1412,6 @@ export default function Pipeline() {
                                 `}
                   >
                     <Toggle className="toggle-button" variant="outline">
-                      {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
                       ToxinPred
                     </Toggle>
                   </div>
@@ -1615,7 +1444,6 @@ export default function Pipeline() {
                 <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      {/* Tooltip triggers when hovering anywhere on this block */}
                       <div
                         className="relative inline-block cursor-pointer"
                         onClick={(e) => {
@@ -1628,10 +1456,7 @@ export default function Pipeline() {
                           }
                         }}
                       >
-                        {/* Round icon */}
                         <RoundIcon imageSrc="/barchart_emoji.svg" />
-
-                        {/* Check overlay */}
                         <div
                           className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center border-[2px] border-gray-400 check-toggle transition-colors
                                 ${
@@ -1644,7 +1469,6 @@ export default function Pipeline() {
                         </div>
                       </div>
                     </TooltipTrigger>
-
                     <TooltipContent side="top">
                       <p>
                         {activeSteps[7]
@@ -1678,7 +1502,6 @@ export default function Pipeline() {
                       onCheckedChange={setS2Consensus}
                     ></Switch>
                   </div>
-
                   <h1
                     className={`parameter-heading transition-all duration-300 ease-in-out
                                     ${
@@ -1703,7 +1526,6 @@ export default function Pipeline() {
                                 `}
                   >
                     <Toggle className="toggle-button" variant="outline">
-                      {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
                       C-Imm-Sim
                     </Toggle>
                   </div>
@@ -1736,7 +1558,6 @@ export default function Pipeline() {
                 <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      {/* Tooltip triggers when hovering anywhere on this block */}
                       <div
                         className="relative inline-block cursor-pointer"
                         onClick={(e) => {
@@ -1749,10 +1570,7 @@ export default function Pipeline() {
                           }
                         }}
                       >
-                        {/* Round icon */}
                         <RoundIcon imageSrc="/globe_emoji.svg" />
-
-                        {/* Check overlay */}
                         <div
                           className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center border-[2px] border-gray-400 check-toggle transition-colors
                                 ${
@@ -1765,7 +1583,6 @@ export default function Pipeline() {
                         </div>
                       </div>
                     </TooltipTrigger>
-
                     <TooltipContent side="top">
                       <p>
                         {activeSteps[8]
@@ -1799,7 +1616,6 @@ export default function Pipeline() {
                       onCheckedChange={setS2Consensus}
                     ></Switch>
                   </div>
-
                   <h1
                     className={`parameter-heading transition-all duration-300 ease-in-out
                                     ${
@@ -1824,7 +1640,6 @@ export default function Pipeline() {
                                 `}
                   >
                     <Toggle className="toggle-button" variant="outline">
-                      {/* <Image src="/netmhcpan.svg" alt="NetMHCpan Icon" width={16} height={16}></Image> */}
                       IEDB
                     </Toggle>
                   </div>

@@ -16,7 +16,6 @@ export default function Dashboard() {
   const handleFileUpload = (file: File | null) => {
     if (file) {
       setUploadedFiles((prev: File[]) => [...prev, file]);
-      console.log("File uploaded:", file);
     }
   };
 
@@ -30,7 +29,6 @@ export default function Dashboard() {
 
       try {
           const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT + 'uploadfile/';
-          console.log("Endpoint: ", endpoint);
           const response = await fetch(endpoint, {
               method: "POST",
               headers: {
@@ -76,9 +74,6 @@ export default function Dashboard() {
           <div className="flex flex-col gap-[4px]">
             <h2 className="pl-[2px] input-heading"><span className="bolded-input-heading cursor-pointer">OR </span> upload sequence(s) from a file</h2>
             <FileUpload setFile={handleFileUpload} />
-            {/* {uploadedFiles.length > 0 && (
-              <h2>{uploadedFiles[0].name}</h2>
-            )} */}
           </div>
         </div>
         <div className="flex justify-end mt-[18px]">
@@ -94,7 +89,6 @@ export default function Dashboard() {
         <Chat />
       </main>
       <footer className="footer_style flex mt-auto w-full">
-        
       </footer>
     </div>
   );

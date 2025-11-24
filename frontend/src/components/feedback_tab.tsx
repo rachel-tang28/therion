@@ -43,9 +43,6 @@ export function FeedbackTab() {
     if (hasError) {
       return;
     }
-
-    // Here we would send the feedback to a backend
-    console.log({ feedback, rating, sentiment });
     
     // Show success message
     setShowSuccess(true);
