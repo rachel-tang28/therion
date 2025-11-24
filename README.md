@@ -64,12 +64,12 @@ Contains the client-facing interface and all UI logic.
 ### 1. Clone the repository
 
 ```bash
-$ git clone <repository-url>
+$ git clone https://github.com/rachel-tang28/therion.git
 ```
 ### 2. Change into the repository folder
 
 ```bash
-$ cd <repository-folder-name>
+$ cd therion/
 ```
 
 ### 3. Change directories into the `backend/` folder
