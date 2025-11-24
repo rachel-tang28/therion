@@ -16,6 +16,7 @@
     - [7. Now, on another terminal, switch directories into the `frontend/` folder.](#7-now-on-another-terminal-switch-directories-into-the-frontend-folder)
     - [8. Install frontend dependencies](#8-install-frontend-dependencies)
     - [9. Run the frontend application](#9-run-the-frontend-application)
+  - [Retrieving and Adding Your Groq API Key](#retrieving-and-adding-your-groq-api-key)
 
 ## Purpose
 
@@ -138,3 +139,45 @@ $ npm run dev
 
 The application should now be running on _http://localhost:3000_.
 <br> 
+
+## Retrieving and Adding Your Groq API Key
+
+Therion uses the Groq API for running LLM-powered analysis via the backend agent.  
+Since API keys must **never** be committed to the repository, each user must create their own `.env` file locally.
+
+### 1. Sign in to Groq Console
+
+Navigate to:
+
+https://console.groq.com/keys
+
+Log in or create an account if needed.
+
+### 2. Create a new API key
+
+Click **Create API Key**, give it a name (e.g., *Therion*), and copy the generated key.
+
+### 3. Create your local `.env` file
+
+Inside the `backend/` directory, there is a template file named `.env.example`
+
+Make a copy of it:
+
+```bash
+$ cp .env.example .env
+```
+
+### 4. Add your API key to the `.env` file
+
+Open `.env` and replace the placeholder:
+
+`GROQ_API_KEY=your_api_key_here`
+with your real key:
+`GROQ_API_KEY=<your-groq-key>`
+
+### 5. Important notes
+
+- The `.env` file is **ignored by Git** and will never be uploaded.
+- Every user of the Therion platform must provide **their own** Groq API key.
+- If the key is compromised, regenerate it immediately from the Groq Console.
+
